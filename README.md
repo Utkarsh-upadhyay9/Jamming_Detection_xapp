@@ -18,7 +18,7 @@ The setup involves:
 2.  **Build tools**: `cmake`, `make`, `gcc` (FlexRIC will require `gcc-10`), `g++`, `swig`, `libsctp-dev`, `python3-dev`, `pkg-config`, `libconfig-dev`, `libconfig++-dev`, `autoconf`, `libtool`.
 3.  **srsRAN Project** (latest version with E2 support).
 4.  **srsRAN 4G** (latest version for srsUE).
-5.  **FlexRIC** (specifically `br-flexric` branch, commit `1a3903a7` or similar).
+5.  **FlexRIC** 
 6.  **Open5GS** (Docker setup recommended).
 7.  **Docker** and **Docker Compose**.
 8.  **iperf3**.
