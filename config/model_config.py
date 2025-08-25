@@ -14,12 +14,59 @@ RF_CONFIG = {
 }
 
 # SVM Configuration  
-SVM_CONFIG = {
-    'kernel': 'rbf',
-    'gamma': 0.001,
+from typing import Dict, Any
+
+SVM_CONFIG: Dict[str, Any] = {
     'C': 1.0,
+    'kernel': 'rbf',
+    'gamma': 'scale',
     'probability': True,
     'random_state': 42
+}
+
+RF_CONFIG: Dict[str, Any] = {
+    'n_estimators': 100,
+    'max_depth': 10,
+    'random_state': 42,
+    'n_jobs': -1
+}
+
+ISOLATION_FOREST_CONFIG: Dict[str, Any] = {
+    'n_estimators': 100,
+    'contamination': 0.1,
+    'random_state': 42,
+    'n_jobs': -1
+}
+
+ENSEMBLE_CONFIG: Dict[str, Any] = {
+    'voting': 'soft',
+    'weights': [0.4, 0.3, 0.3]
+}
+
+TRAINING_CONFIG: Dict[str, Any] = {
+    'test_size': 0.2,
+    'validation_size': 0.2,
+    'random_state': 42,
+    'cross_validation_folds': 5
+}
+
+DRL_CONFIG: Dict[str, Any] = {
+    'actor_lr': 0.0001,
+    'critic_lr': 0.001,
+    'gamma': 0.99,
+    'tau': 0.005,
+    'batch_size': 64,
+    'replay_buffer_size': 100000,
+    'noise_std': 0.2,
+    'noise_decay': 0.995,
+    'hidden_dims': [128, 128],
+    'max_episodes': 1000,
+    'max_steps_per_episode': 1000,
+    'update_frequency': 1,
+    'target_update_frequency': 1,
+    'warmup_steps': 1000,
+    'evaluation_frequency': 50,
+    'save_frequency': 100
 }
 
 IF_CONFIG = {

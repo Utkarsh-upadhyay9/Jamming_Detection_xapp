@@ -1,0 +1,5 @@
+2025-08-25 09:54:37,269 - system - INFO - {"timestamp": "2025-08-25T09:54:37.269009", "event_type": "system_start", "message": "Starting Deep Reinforcement Learning Jamming Detection System"}
+2025-08-25 09:54:37,269 - system - INFO - {"timestamp": "2025-08-25T09:54:37.269129", "event_type": "mode_set", "message": "Mode: train"}
+2025-08-25 09:54:37,269 - system - INFO - {"timestamp": "2025-08-25T09:54:37.269435", "event_type": "device_info", "message": "PyTorch device: CPU"}
+2025-08-25 09:54:37,269 - system - INFO - {"timestamp": "2025-08-25T09:54:37.269577", "event_type": "training_start", "message": "Training HYBRID agent for 50 episodes"}
+2025-08-25 09:54:38,264 - system - INFO - {"timestamp": "2025-08-25T09:54:38.264660", "event_type": "agent_training_start", "message": "Starting training for HYBRID agent"}

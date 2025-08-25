@@ -9,6 +9,7 @@ from itertools import product
 from models.rf_model import RandomForestJammingDetector
 from models.svm_model import SVMJammingDetector  
 from models.isolation_forest_model import IsolationForestJammingDetector
+from models.drl_jamming_detector import DDPGJammingDetector
 from src.data_processor import JammingDataProcessor
 from utils.metrics import PerformanceMetrics, LatencyTracker
 from utils.logger import JammingDetectionLogger
@@ -16,14 +17,25 @@ from config.model_config import ENSEMBLE_WEIGHTS, THRESHOLDS, CONFIDENCE_CONFIG
 
 class EnsembleJammingDetector:
     def __init__(self, weights: Optional[Dict[str, float]] = None,
-                 threshold: float = None):
-        # Model weights (optimized from paper: 44% RF, 41% SVM, 15% IF)
+                 threshold: float = None, use_drl: bool = False, 
+                 drl_actor_type: str = 'hybrid'):
         self.weights = weights or ENSEMBLE_WEIGHTS
         self.threshold = threshold or THRESHOLDS['binary_detection']
+        self.use_drl = use_drl
         
         self.rf_model = RandomForestJammingDetector()
         self.svm_model = SVMJammingDetector()
         self.if_model = IsolationForestJammingDetector()
+        
+        if self.use_drl:
+            self.drl_model = DDPGJammingDetector(
+                state_dim=10,
+                action_dim=5,
+                actor_type=drl_actor_type
+            )
+            self.weights = weights or {
+                'rf': 0.35, 'svm': 0.30, 'if': 0.15, 'drl': 0.20
+            }
         
         self.data_processor = JammingDataProcessor()
         
@@ -109,6 +121,12 @@ class EnsembleJammingDetector:
         training_metrics['if'] = if_metrics
         self.logger.log_model_training("IsolationForest", if_metrics)
         
+        if self.use_drl:
+            self.logger.log_system_event("drl_training", "Training DRL Agent")
+            drl_metrics = self._train_drl_component(X_train_split, y_train_split, X_val, y_val)
+            training_metrics['drl'] = drl_metrics
+            self.logger.log_model_training("DRL", drl_metrics)
+        
         ensemble_metrics = self.evaluate_model(X_test, y_test)
         training_metrics['ensemble'] = ensemble_metrics
         
@@ -152,11 +170,21 @@ class EnsembleJammingDetector:
         svm_jamming_prob = self._extract_jamming_probability(svm_proba, 'svm')  
         if_jamming_prob = self._extract_jamming_probability(if_proba, 'if')
         
-        ensemble_jamming_prob = (
-            self.weights['rf'] * rf_jamming_prob +
-            self.weights['svm'] * svm_jamming_prob +
-            self.weights['if'] * if_jamming_prob
-        )
+        if self.use_drl:
+            drl_jamming_prob = self._get_drl_probability(X)
+            
+            ensemble_jamming_prob = (
+                self.weights['rf'] * rf_jamming_prob +
+                self.weights['svm'] * svm_jamming_prob +
+                self.weights['if'] * if_jamming_prob +
+                self.weights['drl'] * drl_jamming_prob
+            )
+        else:
+            ensemble_jamming_prob = (
+                self.weights['rf'] * rf_jamming_prob +
+                self.weights['svm'] * svm_jamming_prob +
+                self.weights['if'] * if_jamming_prob
+            )
         
         ensemble_proba = np.column_stack([
             1 - ensemble_jamming_prob,  # Normal probability
@@ -167,6 +195,31 @@ class EnsembleJammingDetector:
         self.latency_tracker.add_measurement(latency)
         
         return ensemble_proba
+    
+    def _get_drl_probability(self, X: np.ndarray) -> np.ndarray:
+        if not hasattr(self.drl_model, 'is_trained') or not self.drl_model:
+            return np.ones(len(X)) * 0.5
+        
+        drl_probabilities = []
+        
+        for sample in X:
+            if len(sample) < 10:
+                state = np.zeros(10)
+                state[:len(sample)] = sample
+            else:
+                state = sample[:10]
+            
+            action = self.drl_model.select_action(state, add_noise=False)
+            
+            detection_threshold = action[0] if len(action) > 0 else 0.0
+            confidence_score = action[1] if len(action) > 1 else 0.0
+            
+            jamming_probability = (1 + confidence_score) / 2
+            jamming_probability = np.clip(jamming_probability, 0.0, 1.0)
+            
+            drl_probabilities.append(jamming_probability)
+        
+        return np.array(drl_probabilities)
     
     def _extract_jamming_probability(self, proba: np.ndarray, model_type: str) -> np.ndarray:
         if model_type == 'if':
@@ -407,11 +460,54 @@ class EnsembleJammingDetector:
         
         self.logger.log_system_event("model_loaded", f"Ensemble loaded from {model_dir}")
     
+    def _train_drl_component(self, X_train: np.ndarray, y_train: np.ndarray, 
+                           X_val: np.ndarray, y_val: np.ndarray) -> Dict[str, float]:
+        from envs.jamming_environment import JammingDetectionEnvironment
+        from training.drl_trainer import DRLTrainer
+        
+        env_config = {
+            'state_dim': 10,
+            'action_dim': 5,
+            'max_episode_steps': 100,
+            'jamming_probability': 0.3
+        }
+        
+        trainer = DRLTrainer()
+        
+        try:
+            checkpoint_path = 'models/checkpoints/best_hybrid_agent.pth'
+            if os.path.exists(checkpoint_path):
+                self.drl_model = trainer.load_agent('best_hybrid_agent.pth', 'hybrid')
+                self.logger.log_system_event("drl_loaded", "DRL model loaded from checkpoint")
+            else:
+                self.drl_model = trainer.train_single_agent('hybrid', num_episodes=100)
+                trainer.save_agent(self.drl_model, 'ensemble_drl_agent.pth')
+                self.logger.log_system_event("drl_trained", "DRL model trained from scratch")
+            
+            env = JammingDetectionEnvironment(env_config)
+            eval_results = self.drl_model.evaluate(env, num_episodes=10)
+            
+            return {
+                'mean_reward': eval_results['mean_reward'],
+                'std_reward': eval_results['std_reward'],
+                'training_episodes': 100
+            }
+            
+        except Exception as e:
+            self.logger.log_system_event("drl_error", f"DRL training failed: {str(e)}")
+            return {
+                'mean_reward': 0.0,
+                'std_reward': 0.0,
+                'training_episodes': 0,
+                'error': str(e)
+            }
+    
     def get_ensemble_info(self) -> Dict[str, Any]:
         info = {
             'is_trained': self.is_trained,
             'weights': self.weights,
             'threshold': self.threshold,
+            'use_drl': self.use_drl,
             'feature_names': self.feature_names,
             'class_names': self.class_names,
             'training_history': self.training_history,
@@ -422,5 +518,8 @@ class EnsembleJammingDetector:
                 'if': self.if_model.get_model_info()
             }
         }
+        
+        if self.use_drl and hasattr(self, 'drl_model'):
+            info['individual_models']['drl'] = self.drl_model.get_training_info()
         
         return info
