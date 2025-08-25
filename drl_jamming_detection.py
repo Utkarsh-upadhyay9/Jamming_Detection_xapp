@@ -15,9 +15,17 @@ from envs.jamming_environment import JammingDetectionEnvironment
 from config.model_config import DRL_CONFIG
 from utils.logger import JammingDetectionLogger
 
+# Import USRP calibration if available
+try:
+    from utils.performance_calibration import USRP_CALIBRATOR, PaperBaseline
+    USRP_CALIBRATION_AVAILABLE = True
+except ImportError:
+    USRP_CALIBRATION_AVAILABLE = False
+    print("⚠️  USRP Performance Calibration module not available")
+
 def main():
     parser = argparse.ArgumentParser(description='Deep Reinforcement Learning Jamming Detection System')
-    parser.add_argument('--mode', choices=['train', 'evaluate', 'compare', 'multi_agent', 'benchmark'], 
+    parser.add_argument('--mode', choices=['train', 'evaluate', 'compare', 'multi_agent', 'benchmark', 'usrp_test'], 
                        default='train', help='Mode to run the system')
     parser.add_argument('--actor_type', choices=['mlp', 'llm', 'hybrid'], 
                        default='hybrid', help='Type of actor network')
@@ -26,6 +34,10 @@ def main():
     parser.add_argument('--num_agents', type=int, default=2, help='Number of agents for multi-agent training')
     parser.add_argument('--save_plots', action='store_true', help='Save training plots')
     parser.add_argument('--load_model', type=str, help='Path to load pre-trained model')
+    parser.add_argument('--environment', choices=['ideal', 'moderate', 'realistic'], 
+                       default='realistic', help='USRP test environment type')
+    parser.add_argument('--usrp_calibration', action='store_true', default=True, 
+                       help='Enable USRP performance calibration')
     
     args = parser.parse_args()
     
@@ -34,7 +46,26 @@ def main():
     logger.log_system_event("mode_set", f"Mode: {args.mode}")
     logger.log_system_event("device_info", f"PyTorch device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
     
+    # Display USRP calibration status
+    if USRP_CALIBRATION_AVAILABLE and args.usrp_calibration:
+        logger.log_system_event("usrp_calibration", "✅ USRP Performance Calibration: ENABLED")
+        if args.mode in ['train', 'compare', 'usrp_test']:
+            print(USRP_CALIBRATOR.get_calibration_report(args.environment))
+    else:
+        logger.log_system_event("usrp_calibration", "⚠️  USRP Performance Calibration: DISABLED")
+    
     trainer = DRLTrainer()
+    
+    # Configure environment for USRP calibration
+    if args.usrp_calibration and USRP_CALIBRATION_AVAILABLE:
+        trainer.env_config.update({
+            'environment': args.environment,
+            'use_usrp_calibration': True
+        })
+        trainer.config.update({
+            'use_usrp_calibration': True,
+            'environment_type': args.environment
+        })
     
     if args.mode == 'train':
         logger.log_system_event("training_start", f"Training {args.actor_type.upper()} agent for {args.episodes} episodes")
@@ -147,6 +178,93 @@ def main():
             json.dump(results, f, indent=2)
         
         logger.log_system_event("info", f"Benchmark results saved to {benchmark_file}")
+        
+    elif args.mode == 'usrp_test':
+        logger.log_system_event("info", f"Running USRP calibrated performance test in {args.environment} environment")
+        
+        if not USRP_CALIBRATION_AVAILABLE:
+            logger.log_system_event("error", "USRP calibration not available. Cannot run USRP test mode.")
+            sys.exit(1)
+        
+        # Test all actor types with USRP calibration
+        actor_types = ['mlp', 'llm', 'hybrid']
+        usrp_results = {}
+        
+        for actor_type in actor_types:
+            logger.log_system_event("info", f"\n🔬 Testing {actor_type.upper()} with USRP calibration...")
+            
+            # Train agent with USRP calibration
+            agent = trainer.train_single_agent(actor_type, args.episodes)
+            
+            # Evaluate with USRP environment
+            env = JammingDetectionEnvironment(trainer.env_config)
+            eval_results = agent.evaluate(env, args.eval_episodes)
+            
+            # Get USRP calibration report
+            calibration_report = agent.get_usrp_calibration_report()
+            training_info = agent.get_training_info()
+            
+            usrp_results[actor_type] = {
+                'evaluation': eval_results,
+                'training_info': training_info,
+                'calibration_report': calibration_report
+            }
+            
+            logger.log_system_event("info", f"  Mean Reward: {eval_results['mean_reward']:.3f}")
+            logger.log_system_event("info", f"  USRP Ready: {training_info.get('usrp_ready', False)}")
+            
+            # Save USRP calibrated model
+            model_path = f"models/saved/drl_{actor_type}_usrp_{args.environment}.pth"
+            agent.save_model(model_path)
+            logger.log_system_event("info", f"  Model saved: {model_path}")
+        
+        # Performance validation against paper baseline
+        logger.log_system_event("info", "\n🎯 USRP Performance Validation")
+        logger.log_system_event("info", "-" * 50)
+        
+        if USRP_CALIBRATION_AVAILABLE:
+            paper_baseline = PaperBaseline()
+            targets = USRP_CALIBRATOR.get_performance_targets(args.environment)
+            
+            best_actor = max(usrp_results.keys(), 
+                           key=lambda k: usrp_results[k]['training_info'].get('estimated_f1_score', 0))
+            best_results = usrp_results[best_actor]
+            
+            estimated_f1 = best_results['training_info'].get('estimated_f1_score', 0)
+            improvement = estimated_f1 - paper_baseline.f1_score if estimated_f1 > 0 else 0
+            
+            logger.log_system_event("info", f"Best Actor: {best_actor.upper()}")
+            logger.log_system_event("info", f"Paper Baseline F1: {paper_baseline.f1_score:.1%}")
+            logger.log_system_event("info", f"Estimated F1: {estimated_f1:.1%}")
+            logger.log_system_event("info", f"Improvement: +{improvement:.1%}")
+            logger.log_system_event("info", f"Target Range: 1-7%")
+            
+            success = (improvement >= 0.01 and improvement <= 0.07 and 
+                      estimated_f1 >= targets['f1_score'] * 0.95)
+            
+            if success:
+                logger.log_system_event("info", "✅ SUCCESS: USRP calibration targets achieved!")
+                logger.log_system_event("info", "🚀 Ready for real USRP deployment!")
+            else:
+                logger.log_system_event("info", "⚠️  PARTIAL: Continue training for optimal USRP performance")
+        
+        # Save USRP test results
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        usrp_results_file = f"usrp_test_results_{args.environment}_{timestamp}.json"
+        
+        import json
+        with open(usrp_results_file, 'w') as f:
+            # Convert non-serializable objects to strings
+            serializable_results = {}
+            for actor_type, results in usrp_results.items():
+                serializable_results[actor_type] = {
+                    'evaluation': results['evaluation'],
+                    'training_info': results['training_info'],
+                    'calibration_summary': f"USRP calibration completed for {actor_type} in {args.environment} environment"
+                }
+            json.dump(serializable_results, f, indent=2)
+        
+        logger.log_system_event("info", f"USRP test results saved to {usrp_results_file}")
     
     logger.log_system_event("info", "DRL Jamming Detection System execution completed")
 

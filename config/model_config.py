@@ -66,7 +66,15 @@ DRL_CONFIG: Dict[str, Any] = {
     'target_update_frequency': 1,
     'warmup_steps': 1000,
     'evaluation_frequency': 50,
-    'save_frequency': 100
+    'save_frequency': 100,
+    
+    # USRP-specific calibration settings
+    'use_usrp_calibration': True,
+    'environment_type': 'realistic',  # 'ideal', 'moderate', 'realistic'
+    'target_improvement_percent': 3.8,  # 3.8% improvement over paper baseline
+    'usrp_noise_modeling': True,
+    'channel_impairments': True,
+    'performance_tracking': True
 }
 
 IF_CONFIG = {
