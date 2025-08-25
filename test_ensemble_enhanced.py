@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Enhanced test with improved Isolation Forest handling for multi-class.
-"""
-
 import sys
 import os
 import pandas as pd
@@ -10,15 +5,12 @@ import numpy as np
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 
-# Add src to path  
 sys.path.append(os.path.dirname(__file__))
 
 def test_ensemble_enhanced():
-    """Test ensemble model with improved multi-class handling."""
     print("🚀 Enhanced Ensemble Model Test with Realistic USRP Data")
     print("=" * 60)
     
-    # Load the converted datasets
     normal_path = "Ensemble_ML_Jamming_detection_dataset/realistic_dataset/normal_traffic.csv"
     jamming_path = "Ensemble_ML_Jamming_detection_dataset/realistic_dataset/jamming_attacks.csv"
     
@@ -26,7 +18,6 @@ def test_ensemble_enhanced():
     normal_df = pd.read_csv(normal_path)
     jamming_df = pd.read_csv(jamming_path)
     
-    # Combine datasets
     X_normal = normal_df.drop(['label'], axis=1).values
     y_normal = normal_df['label'].values
     
@@ -39,13 +30,11 @@ def test_ensemble_enhanced():
     print(f"✅ Combined dataset: {X.shape[0]} samples, {X.shape[1]} features")
     print(f"📊 Label distribution: {np.bincount(y)}")
     
-    # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
     print(f"📈 Training set: {X_train.shape[0]} samples")
     print(f"🧪 Test set: {X_test.shape[0]} samples")
     
-    # Import individual models
     from models.rf_model import RandomForestJammingDetector
     from models.svm_model import SVMJammingDetector
     
@@ -62,16 +51,13 @@ def test_ensemble_enhanced():
         
         start_time = datetime.now()
         
-        # Train the model
         model.train(X_train, y_train)
         
-        # Test predictions
         y_pred = model.predict(X_test)
         confidence = model.calculate_confidence(X_test)
         
         training_time = (datetime.now() - start_time).total_seconds()
         
-        # Calculate metrics
         from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report
         
         accuracy = accuracy_score(y_test, y_pred)
@@ -94,7 +80,6 @@ def test_ensemble_enhanced():
         print(f"  ✅ Accuracy: {accuracy:.4f}")
         print(f"  ⏱️  Training time: {training_time:.2f}s")
         
-        # Detailed classification report
         print(f"\n📊 Detailed Classification Report for {name}:")
         class_names = ['Normal', 'Power Jamming', 'Sweep Jamming', 'Intelligent Jamming']
         print(classification_report(y_test, y_pred, target_names=class_names, digits=4))
@@ -102,19 +87,16 @@ def test_ensemble_enhanced():
     # Enhanced ensemble combination (RF + SVM only, better performance)
     print(f"\n🎯 Testing Enhanced Ensemble (RF + SVM)...")
     
-    # Get predictions from main models
     rf_pred = results['Random Forest']['predictions']
     rf_conf = results['Random Forest']['confidences']
     
     svm_pred = results['SVM']['predictions']
     svm_conf = results['SVM']['confidences']
     
-    # Enhanced ensemble voting (equal weight + confidence boost)
     ensemble_pred = []
     ensemble_conf = []
     
     for i in range(len(y_test)):
-        # Confidence-weighted voting
         rf_weight = rf_conf[i] * 0.6  # Higher weight for RF (better performer)
         svm_weight = svm_conf[i] * 0.4  # Lower weight for SVM
         
@@ -122,14 +104,12 @@ def test_ensemble_enhanced():
         votes[rf_pred[i]] = votes.get(rf_pred[i], 0) + rf_weight
         votes[svm_pred[i]] = votes.get(svm_pred[i], 0) + svm_weight
         
-        # Final prediction
         final_pred = max(votes.keys(), key=lambda k: votes[k])
         final_conf = max(votes.values())
         
         ensemble_pred.append(final_pred)
         ensemble_conf.append(final_conf)
     
-    # Calculate ensemble metrics
     ensemble_accuracy = accuracy_score(y_test, ensemble_pred)
     ensemble_f1 = f1_score(y_test, ensemble_pred, average='weighted')
     ensemble_precision = precision_score(y_test, ensemble_pred, average='weighted')
@@ -146,12 +126,10 @@ def test_ensemble_enhanced():
     print(f"  ✅ Enhanced Ensemble F1-Score: {ensemble_f1:.4f}")
     print(f"  ✅ Enhanced Ensemble Accuracy: {ensemble_accuracy:.4f}")
     
-    # Detailed ensemble classification report
     print(f"\n📊 Enhanced Ensemble Classification Report:")
     class_names = ['Normal', 'Power Jamming', 'Sweep Jamming', 'Intelligent Jamming']
     print(classification_report(y_test, ensemble_pred, target_names=class_names, digits=4))
     
-    # Final results summary
     print(f"\n📊 FINAL RESULTS SUMMARY:")
     print("=" * 50)
     
@@ -165,7 +143,6 @@ def test_ensemble_enhanced():
             print(f"  Training Time: {metrics['training_time']:.2f}s")
         print(f"  Mean Confidence: {metrics['mean_confidence']:.3f}")
     
-    # Performance targets validation
     print(f"\n🎯 Performance Targets Validation:")
     print("-" * 40)
     
@@ -191,7 +168,6 @@ def test_ensemble_enhanced():
     else:
         print("💡 Consider further dataset refinement to meet all targets.")
     
-    # Performance analysis
     print(f"\n📈 PERFORMANCE ANALYSIS:")
     print("-" * 30)
     print(f"🏅 Best Model: Random Forest ({results['Random Forest']['f1_score']:.4f} F1-Score)")

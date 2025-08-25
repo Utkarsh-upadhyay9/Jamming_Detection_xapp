@@ -1,8 +1,3 @@
-"""
-Random Forest model implementation for jamming detection.
-Based on the research paper specifications.
-"""
-
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -14,56 +9,31 @@ import os
 from config.model_config import RF_CONFIG, TRAINING_CONFIG
 
 class RandomForestJammingDetector:
-    """Random Forest classifier for jamming detection."""
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize Random Forest detector.
-        
-        Args:
-            config: Optional configuration dictionary
-        """
         self.config = config or RF_CONFIG
         self.model = RandomForestClassifier(**self.config)
         self.is_trained = False
         self.feature_names = None
         self.class_names = None
-        
-        # Performance tracking
         self.training_metrics = {}
         self.prediction_history = []
     
     def train(self, X_train: np.ndarray, y_train: np.ndarray, 
               X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None,
               feature_names: Optional[list] = None) -> Dict[str, float]:
-        """
-        Train the Random Forest model.
-        
-        Args:
-            X_train: Training features
-            y_train: Training labels
-            X_val: Validation features (optional)
-            y_val: Validation labels (optional)
-            feature_names: Names of features
-            
-        Returns:
-            Training metrics
-        """
         self.feature_names = feature_names
         self.class_names = list(np.unique(y_train))
         
-        # Train the model
         self.model.fit(X_train, y_train)
         self.is_trained = True
         
-        # Calculate training metrics
         train_pred = self.model.predict(X_train)
         self.training_metrics = {
             'train_accuracy': accuracy_score(y_train, train_pred),
             'train_f1_score': f1_score(y_train, train_pred, average='weighted')
         }
         
-        # Validation metrics if provided
         if X_val is not None and y_val is not None:
             val_pred = self.model.predict(X_val)
             self.training_metrics.update({
@@ -74,15 +44,6 @@ class RandomForestJammingDetector:
         return self.training_metrics
     
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Make predictions.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Predicted labels
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
@@ -92,27 +53,12 @@ class RandomForestJammingDetector:
         return predictions
     
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """
-        Get prediction probabilities.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Prediction probabilities
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
         return self.model.predict_proba(X)
     
     def get_feature_importance(self) -> Dict[str, float]:
-        """
-        Get feature importance scores.
-        
-        Returns:
-            Dictionary mapping feature names to importance scores
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained to get feature importance")
         
@@ -124,15 +70,6 @@ class RandomForestJammingDetector:
             return {f'feature_{i}': imp for i, imp in enumerate(importance)}
     
     def calculate_confidence(self, X: np.ndarray) -> np.ndarray:
-        """
-        Calculate prediction confidence using entropy.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Confidence scores
-        """
         probabilities = self.predict_proba(X)
         
         # Calculate entropy-based confidence
@@ -145,19 +82,9 @@ class RandomForestJammingDetector:
         return confidence
     
     def get_tree_predictions(self, X: np.ndarray) -> np.ndarray:
-        """
-        Get predictions from individual trees.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Array of shape (n_samples, n_estimators) with individual tree predictions
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
-        # Get predictions from each tree
         tree_predictions = np.array([
             tree.predict(X) for tree in self.model.estimators_
         ]).T
@@ -165,25 +92,14 @@ class RandomForestJammingDetector:
         return tree_predictions
     
     def calculate_uncertainty(self, X: np.ndarray) -> Dict[str, np.ndarray]:
-        """
-        Calculate prediction uncertainty using multiple measures.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Dictionary with different uncertainty measures
-        """
         probabilities = self.predict_proba(X)
         tree_predictions = self.get_tree_predictions(X)
         
         # Entropy-based uncertainty
         entropy = -np.sum(probabilities * np.log2(probabilities + 1e-10), axis=1)
         
-        # Variance-based uncertainty (variance across trees)
         tree_variance = np.var(tree_predictions, axis=1)
         
-        # Margin-based uncertainty (difference between top two predictions)
         sorted_probs = np.sort(probabilities, axis=1)
         margin = sorted_probs[:, -1] - sorted_probs[:, -2]
         
@@ -195,12 +111,6 @@ class RandomForestJammingDetector:
         }
     
     def get_model_info(self) -> Dict[str, Any]:
-        """
-        Get model information and statistics.
-        
-        Returns:
-            Dictionary with model information
-        """
         if not self.is_trained:
             return {'is_trained': False}
         
@@ -222,12 +132,6 @@ class RandomForestJammingDetector:
         return info
     
     def save_model(self, filepath: str):
-        """
-        Save the trained model to disk.
-        
-        Args:
-            filepath: Path to save the model
-        """
         if not self.is_trained:
             raise ValueError("Cannot save untrained model")
         
@@ -240,18 +144,11 @@ class RandomForestJammingDetector:
             'is_trained': self.is_trained
         }
         
-        # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         
         joblib.dump(model_data, filepath)
     
     def load_model(self, filepath: str):
-        """
-        Load a trained model from disk.
-        
-        Args:
-            filepath: Path to the saved model
-        """
         model_data = joblib.load(filepath)
         
         self.model = model_data['model']
@@ -262,20 +159,9 @@ class RandomForestJammingDetector:
         self.is_trained = model_data['is_trained']
     
     def reset_prediction_history(self):
-        """Reset prediction history."""
         self.prediction_history = []
     
     def get_decision_path(self, X: np.ndarray, tree_index: int = 0) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Get decision path for a specific tree.
-        
-        Args:
-            X: Input features
-            tree_index: Index of the tree to analyze
-            
-        Returns:
-            Tuple of (indicator_matrix, n_nodes_ptr)
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained to get decision paths")
         
@@ -286,27 +172,15 @@ class RandomForestJammingDetector:
         return tree.decision_path(X)
     
     def explain_prediction(self, X: np.ndarray, sample_index: int = 0) -> Dict[str, Any]:
-        """
-        Explain a single prediction using feature contributions.
-        
-        Args:
-            X: Input features
-            sample_index: Index of the sample to explain
-            
-        Returns:
-            Dictionary with explanation details
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained to explain predictions")
         
         sample = X[sample_index:sample_index+1]
         
-        # Get prediction and probability
         prediction = self.predict(sample)[0]
         probabilities = self.predict_proba(sample)[0]
         confidence = self.calculate_confidence(sample)[0]
         
-        # Get feature importance for this prediction
         feature_importance = self.get_feature_importance()
         
         explanation = {

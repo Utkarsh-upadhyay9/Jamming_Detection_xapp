@@ -1,8 +1,3 @@
-"""
-Support Vector Machine model implementation for jamming detection.
-Based on the research paper specifications with RBF kernel and Platt scaling.
-"""
-
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
@@ -16,59 +11,30 @@ import os
 from config.model_config import SVM_CONFIG, TRAINING_CONFIG
 
 class SVMJammingDetector:
-    """Support Vector Machine classifier for jamming detection."""
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize SVM detector.
-        
-        Args:
-            config: Optional configuration dictionary
-        """
         self.config = config or SVM_CONFIG
         self.model = SVC(**self.config)
         self.scaler = StandardScaler()
         self.is_trained = False
         self.feature_names = None
         self.class_names = None
-        
-        # Performance tracking
         self.training_metrics = {}
         self.prediction_history = []
-        
-        # Support vector information
         self.support_vectors_info = {}
     
     def train(self, X_train: np.ndarray, y_train: np.ndarray, 
               X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None,
               feature_names: Optional[list] = None) -> Dict[str, float]:
-        """
-        Train the SVM model.
-        
-        Args:
-            X_train: Training features
-            y_train: Training labels
-            X_val: Validation features (optional)
-            y_val: Validation labels (optional)
-            feature_names: Names of features
-            
-        Returns:
-            Training metrics
-        """
         self.feature_names = feature_names
         self.class_names = list(np.unique(y_train))
         
-        # Scale features
         X_train_scaled = self.scaler.fit_transform(X_train)
-        
-        # Train the model
         self.model.fit(X_train_scaled, y_train)
         self.is_trained = True
         
-        # Store support vector information
         self._extract_support_vector_info()
         
-        # Calculate training metrics
         train_pred = self.model.predict(X_train_scaled)
         self.training_metrics = {
             'train_accuracy': accuracy_score(y_train, train_pred),
@@ -77,7 +43,6 @@ class SVMJammingDetector:
             'support_vector_ratio': self.model.n_support_.sum() / len(X_train)
         }
         
-        # Validation metrics if provided
         if X_val is not None and y_val is not None:
             X_val_scaled = self.scaler.transform(X_val)
             val_pred = self.model.predict(X_val_scaled)
@@ -89,7 +54,6 @@ class SVMJammingDetector:
         return self.training_metrics
     
     def _extract_support_vector_info(self):
-        """Extract and store support vector information."""
         if not self.is_trained:
             return
         
@@ -102,15 +66,6 @@ class SVMJammingDetector:
         }
     
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Make predictions.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Predicted labels
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
@@ -121,15 +76,6 @@ class SVMJammingDetector:
         return predictions
     
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """
-        Get prediction probabilities using Platt scaling.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Prediction probabilities
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before making predictions")
         
@@ -140,15 +86,6 @@ class SVMJammingDetector:
         return self.model.predict_proba(X_scaled)
     
     def decision_function(self, X: np.ndarray) -> np.ndarray:
-        """
-        Get decision function values (distance to hyperplane).
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Decision function values
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained before computing decision function")
         
@@ -156,87 +93,45 @@ class SVMJammingDetector:
         return self.model.decision_function(X_scaled)
     
     def calculate_confidence(self, X: np.ndarray) -> np.ndarray:
-        """
-        Calculate prediction confidence using decision function distance.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Confidence scores
-        """
         decision_values = self.decision_function(X)
         
-        # For binary classification, use absolute distance to hyperplane
         if len(self.class_names) == 2:
             confidence = np.abs(decision_values)
-            # Normalize using sigmoid-like function
-            confidence = 1 / (1 + np.exp(-confidence))
+            confidence = 1 / (1 + np.exp(-confidence)) # sigmoid normalization
         else:
-            # For multi-class, use the difference between top two decision values
             if decision_values.ndim == 1:
                 decision_values = decision_values.reshape(-1, 1)
             
             sorted_decisions = np.sort(decision_values, axis=1)
             confidence = sorted_decisions[:, -1] - sorted_decisions[:, -2]
-            # Normalize to [0, 1]
             confidence = (confidence - confidence.min()) / (confidence.max() - confidence.min() + 1e-10)
         
         return confidence
     
     def get_support_vector_info(self) -> Dict[str, Any]:
-        """
-        Get detailed support vector information.
-        
-        Returns:
-            Dictionary with support vector details
-        """
         return self.support_vectors_info.copy()
     
     def calculate_margin(self, X: np.ndarray) -> np.ndarray:
-        """
-        Calculate margin (distance to decision boundary) for samples.
-        
-        Args:
-            X: Input features
-            
-        Returns:
-            Margin values
-        """
         decision_values = self.decision_function(X)
         
-        # For binary classification
         if len(self.class_names) == 2:
             return np.abs(decision_values)
         else:
-            # For multi-class, return the minimum margin among all binary classifiers
             if decision_values.ndim == 1:
                 decision_values = decision_values.reshape(-1, 1)
             return np.min(np.abs(decision_values), axis=1)
     
     def get_kernel_matrix(self, X: np.ndarray, Y: Optional[np.ndarray] = None) -> np.ndarray:
-        """
-        Compute kernel matrix between X and Y (or X and support vectors if Y is None).
-        
-        Args:
-            X: First set of samples
-            Y: Second set of samples (optional)
-            
-        Returns:
-            Kernel matrix
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained to compute kernel matrix")
         
         X_scaled = self.scaler.transform(X)
         
         if Y is None:
-            # Compute kernel with support vectors
             Y_scaled = self.model.support_vectors_
         else:
             Y_scaled = self.scaler.transform(Y)
         
-        # Compute RBF kernel
         gamma = self.config.get('gamma', 'scale')
         if gamma == 'scale':
             gamma = 1.0 / (X.shape[1] * X.var())
@@ -251,22 +146,11 @@ class SVMJammingDetector:
         return np.exp(-gamma * distances)
     
     def explain_prediction(self, X: np.ndarray, sample_index: int = 0) -> Dict[str, Any]:
-        """
-        Explain a single prediction using support vector contributions.
-        
-        Args:
-            X: Input features
-            sample_index: Index of the sample to explain
-            
-        Returns:
-            Dictionary with explanation details
-        """
         if not self.is_trained:
             raise ValueError("Model must be trained to explain predictions")
         
         sample = X[sample_index:sample_index+1]
         
-        # Get prediction and decision function
         prediction = self.predict(sample)[0]
         decision_value = self.decision_function(sample)[0]
         confidence = self.calculate_confidence(sample)[0]
@@ -291,22 +175,11 @@ class SVMJammingDetector:
         return explanation
     
     def _get_sv_contributions(self, X: np.ndarray) -> Dict[str, float]:
-        """
-        Calculate support vector contributions to the decision function.
-        
-        Args:
-            X: Input sample
-            
-        Returns:
-            Dictionary with support vector contribution analysis
-        """
         if not self.is_trained:
             return {}
         
-        # Get kernel values between sample and support vectors
         kernel_values = self.get_kernel_matrix(X)
         
-        # Calculate contributions (simplified analysis)
         contributions = {
             'total_support_vectors': len(self.model.support_vectors_),
             'kernel_sum': np.sum(kernel_values),
@@ -318,12 +191,6 @@ class SVMJammingDetector:
         return contributions
     
     def get_model_info(self) -> Dict[str, Any]:
-        """
-        Get model information and statistics.
-        
-        Returns:
-            Dictionary with model information
-        """
         if not self.is_trained:
             return {'is_trained': False}
         
@@ -344,12 +211,6 @@ class SVMJammingDetector:
         return info
     
     def save_model(self, filepath: str):
-        """
-        Save the trained model to disk.
-        
-        Args:
-            filepath: Path to save the model
-        """
         if not self.is_trained:
             raise ValueError("Cannot save untrained model")
         
@@ -364,18 +225,10 @@ class SVMJammingDetector:
             'is_trained': self.is_trained
         }
         
-        # Create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        
         joblib.dump(model_data, filepath)
     
     def load_model(self, filepath: str):
-        """
-        Load a trained model from disk.
-        
-        Args:
-            filepath: Path to the saved model
-        """
         model_data = joblib.load(filepath)
         
         self.model = model_data['model']
@@ -388,5 +241,4 @@ class SVMJammingDetector:
         self.is_trained = model_data['is_trained']
     
     def reset_prediction_history(self):
-        """Reset prediction history."""
         self.prediction_history = []

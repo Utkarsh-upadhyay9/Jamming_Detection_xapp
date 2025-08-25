@@ -1,7 +1,3 @@
-"""
-Logging utilities for the jamming detection xApp.
-"""
-
 import logging
 import os
 import json
@@ -10,21 +6,16 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class JammingDetectionLogger:
-    """Logger for jamming detection events and system performance."""
-    
     def __init__(self, log_dir: str = "logs", log_level: int = logging.INFO):
         self.log_dir = log_dir
         self.log_level = log_level
         
-        # Create log directory if it doesn't exist
         os.makedirs(log_dir, exist_ok=True)
         
-        # Setup loggers
         self.detection_logger = self._setup_logger("detection", "jamming_detection.log")
         self.performance_logger = self._setup_logger("performance", "performance.log")
         self.system_logger = self._setup_logger("system", "system.log")
         
-        # Event counters
         self.event_counts = {
             'normal_traffic': 0,
             'power_jamming': 0,
@@ -34,7 +25,6 @@ class JammingDetectionLogger:
             'false_negatives': 0
         }
         
-        # Performance tracking
         self.performance_metrics = {
             'total_detections': 0,
             'detection_latencies': [],
@@ -43,26 +33,21 @@ class JammingDetectionLogger:
         }
     
     def _setup_logger(self, name: str, filename: str) -> logging.Logger:
-        """Setup individual logger with file and console handlers."""
         logger = logging.getLogger(name)
         logger.setLevel(self.log_level)
         
-        # Prevent duplicate handlers
         if logger.handlers:
             return logger
         
-        # File handler
         file_handler = logging.FileHandler(
             os.path.join(self.log_dir, filename), 
             mode='a'
         )
         file_handler.setLevel(self.log_level)
         
-        # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.WARNING)  # Only warnings and errors to console
         
-        # Formatter
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
@@ -75,15 +60,12 @@ class JammingDetectionLogger:
         return logger
     
     def log_detection_event(self, detection_result: Dict[str, Any]):
-        """Log jamming detection event."""
         timestamp = datetime.now().isoformat()
         
-        # Update event counters
         detected_class = detection_result.get('predicted_class', 'unknown')
         if detected_class in self.event_counts:
             self.event_counts[detected_class] += 1
         
-        # Log the event
         log_entry = {
             'timestamp': timestamp,
             'event_type': 'detection',
@@ -96,16 +78,13 @@ class JammingDetectionLogger:
         
         self.detection_logger.info(json.dumps(log_entry))
         
-        # Update performance tracking
         self.performance_metrics['total_detections'] += 1
         if 'latency_ms' in detection_result:
             self.performance_metrics['detection_latencies'].append(detection_result['latency_ms'])
     
     def log_performance_metrics(self, metrics: Dict[str, float]):
-        """Log performance metrics."""
         timestamp = datetime.now().isoformat()
         
-        # Update performance tracking
         if 'accuracy' in metrics:
             self.performance_metrics['accuracy_scores'].append(metrics['accuracy'])
         if 'f1_score' in metrics:
@@ -121,7 +100,6 @@ class JammingDetectionLogger:
     
     def log_system_event(self, event_type: str, message: str, level: str = "INFO", 
                         additional_data: Optional[Dict[str, Any]] = None):
-        """Log system events."""
         timestamp = datetime.now().isoformat()
         
         log_entry = {
@@ -147,7 +125,6 @@ class JammingDetectionLogger:
             self.system_logger.critical(log_message)
     
     def log_model_training(self, model_name: str, training_metrics: Dict[str, float]):
-        """Log model training results."""
         self.log_system_event(
             event_type="model_training",
             message=f"Model {model_name} training completed",
@@ -158,7 +135,6 @@ class JammingDetectionLogger:
         )
     
     def log_ensemble_optimization(self, weights: Dict[str, float], f1_score: float):
-        """Log ensemble weight optimization results."""
         self.log_system_event(
             event_type="ensemble_optimization",
             message="Ensemble weights optimized",
@@ -170,7 +146,6 @@ class JammingDetectionLogger:
     
     def log_error(self, error_type: str, error_message: str, 
                  exception: Optional[Exception] = None):
-        """Log error events."""
         error_data = {
             'error_type': error_type,
             'error_message': error_message
@@ -188,7 +163,6 @@ class JammingDetectionLogger:
         )
     
     def log_e2_interface_event(self, event_type: str, data: Dict[str, Any]):
-        """Log E2 interface events."""
         self.log_system_event(
             event_type=f"e2_interface_{event_type}",
             message=f"E2 interface event: {event_type}",
@@ -196,7 +170,6 @@ class JammingDetectionLogger:
         )
     
     def log_ric_communication(self, message_type: str, payload: Dict[str, Any]):
-        """Log RIC communication events."""
         self.log_system_event(
             event_type="ric_communication",
             message=f"RIC communication: {message_type}",
@@ -207,7 +180,6 @@ class JammingDetectionLogger:
         )
     
     def get_detection_summary(self) -> Dict[str, Any]:
-        """Get summary of detection events."""
         total_events = sum(self.event_counts.values())
         
         summary = {
@@ -223,7 +195,6 @@ class JammingDetectionLogger:
         return summary
     
     def get_performance_summary(self) -> Dict[str, Any]:
-        """Get summary of performance metrics."""
         latencies = self.performance_metrics['detection_latencies']
         accuracies = self.performance_metrics['accuracy_scores']
         f1_scores = self.performance_metrics['f1_scores']
@@ -259,7 +230,6 @@ class JammingDetectionLogger:
         return summary
     
     def export_logs(self, export_format: str = "json") -> str:
-        """Export logs in specified format."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         if export_format.lower() == "json":
@@ -288,7 +258,6 @@ class JammingDetectionLogger:
             raise ValueError(f"Unsupported export format: {export_format}")
     
     def reset_counters(self):
-        """Reset all counters and metrics."""
         self.event_counts = {key: 0 for key in self.event_counts}
         self.performance_metrics = {
             'total_detections': 0,

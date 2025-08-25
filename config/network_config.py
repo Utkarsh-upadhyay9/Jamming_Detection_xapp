@@ -1,11 +1,5 @@
-"""
-Network environment configuration for different testing scenarios.
-Based on the research paper's three network environments.
-"""
-
 import numpy as np
 
-# Network Environment Definitions
 NETWORK_ENVIRONMENTS = {
     'ideal': {
         'description': 'Baseline scenario with minimal environmental interference',
@@ -39,7 +33,6 @@ NETWORK_ENVIRONMENTS = {
     }
 }
 
-# Jamming Attack Configurations
 JAMMING_SCENARIOS = {
     'power_jamming': {
         'description': 'High-power broadband noise overwhelming legitimate signals',
@@ -71,7 +64,6 @@ JAMMING_SCENARIOS = {
     }
 }
 
-# Signal Quality Reference Values (for normal conditions)
 SIGNAL_QUALITY_REFERENCE = {
     'sinr_mean_ref': 15.0,                     # Reference SINR (dB)
     'sinr_std_ref': 2.0,                       # Reference SINR std dev
@@ -82,7 +74,6 @@ SIGNAL_QUALITY_REFERENCE = {
     'psd_variance_ref': 1.0                    # Reference PSD variance
 }
 
-# Network Topology Parameters
 NETWORK_TOPOLOGY = {
     'cell_radius_m': 1000,                     # Cell coverage radius
     'base_station_height_m': 30,               # BS antenna height
@@ -93,7 +84,6 @@ NETWORK_TOPOLOGY = {
     'subcarrier_spacing_khz': 15               # Subcarrier spacing
 }
 
-# E2 Interface Configuration
 E2_INTERFACE_CONFIG = {
     'reporting_interval_ms': 1000,             # 1 second reporting interval
     'max_metrics_per_report': 15,              # Maximum metrics per report
@@ -102,7 +92,6 @@ E2_INTERFACE_CONFIG = {
     'buffer_size': 1024                        # Data buffer size
 }
 
-# Quality of Service Requirements
 QOS_REQUIREMENTS = {
     'urllc': {
         'latency_ms': 1,                       # Ultra-low latency
@@ -121,21 +110,16 @@ QOS_REQUIREMENTS = {
     }
 }
 
-# Functions for environment simulation
 def generate_rayleigh_fading(sigma, size=1):
-    """Generate Rayleigh fading coefficients."""
     return np.random.rayleigh(sigma, size)
 
 def generate_exponential_delay_spread(lambda_param, size=1):
-    """Generate exponential delay spread for multipath."""
     return np.random.exponential(1/lambda_param, size)
 
 def apply_environmental_degradation(signal, degradation_factor):
-    """Apply environmental degradation to signal."""
     noise = np.random.normal(0, degradation_factor, len(signal))
     return signal + noise
 
 def calculate_path_loss(distance_m, frequency_ghz):
-    """Calculate path loss using free space model."""
     path_loss_db = 20 * np.log10(distance_m) + 20 * np.log10(frequency_ghz) + 32.45
     return path_loss_db

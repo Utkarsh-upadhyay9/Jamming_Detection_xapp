@@ -1,16 +1,9 @@
-"""
-Model configuration parameters for ensemble jamming detection.
-Based on the research paper specifications.
-"""
-
-# Ensemble weights (empirically optimized for maximum F1-score)
 ENSEMBLE_WEIGHTS = {
     'rf': 0.44,      # Random Forest: 44%
     'svm': 0.41,     # Support Vector Machine: 41%
     'if': 0.15       # Isolation Forest: 15%
 }
 
-# Random Forest Configuration
 RF_CONFIG = {
     'n_estimators': 100,
     'max_depth': None,
@@ -29,7 +22,6 @@ SVM_CONFIG = {
     'random_state': 42
 }
 
-# Isolation Forest Configuration
 IF_CONFIG = {
     'n_estimators': 100,
     'contamination': 0.3,  # 30% jamming in dataset
@@ -37,7 +29,6 @@ IF_CONFIG = {
     'n_jobs': -1
 }
 
-# Classification Thresholds
 THRESHOLDS = {
     'binary_detection': 0.52,     # Binary jamming detection threshold
     'power_jamming': 0.8,         # Power jamming confidence threshold
@@ -45,14 +36,12 @@ THRESHOLDS = {
     'intelligent_jamming': 0.6    # Intelligent jamming confidence threshold
 }
 
-# Feature Engineering Parameters
 FEATURE_CONFIG = {
     'window_size': 10,            # Sampling window size
     'normalization': 'zscore',    # Z-score normalization
     'feature_count': 15           # Total engineered features
 }
 
-# Model Performance Requirements
 PERFORMANCE_REQUIREMENTS = {
     'max_latency_ms': 100,        # Maximum detection latency (ms)
     'min_accuracy': 0.90,         # Minimum required accuracy
@@ -60,7 +49,6 @@ PERFORMANCE_REQUIREMENTS = {
     'memory_limit_mb': 64         # Memory usage limit (MB)
 }
 
-# Training Configuration
 TRAINING_CONFIG = {
     'test_size': 0.2,             # Train/test split ratio
     'validation_size': 0.1,       # Validation set size
@@ -68,7 +56,6 @@ TRAINING_CONFIG = {
     'random_state': 42
 }
 
-# Confidence Estimation Parameters
 CONFIDENCE_CONFIG = {
     'entropy_weight': 0.3,        # Entropy weighting factor
     'variance_threshold': 0.25,   # Maximum variance for confidence
