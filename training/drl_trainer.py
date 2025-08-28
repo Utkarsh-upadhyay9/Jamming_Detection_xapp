@@ -8,6 +8,10 @@ from datetime import datetime
 
 from models.drl_jamming_detector import DDPGJammingDetector
 from envs.jamming_environment import JammingDetectionEnvironment, MultiAgentJammingEnvironment
+try:
+    from envs.jamming_dataset_environment import JammingDatasetEnvironment
+except ImportError:
+    JammingDatasetEnvironment = None
 from config.model_config import DRL_CONFIG
 from utils.logger import JammingDetectionLogger
 from utils.metrics import PerformanceMetrics, LatencyTracker
@@ -28,15 +32,31 @@ class DRLTrainer:
         }
         
         self.training_history = {
-            'mlp': {'rewards': [], 'losses': [], 'eval_rewards': []},
-            'llm': {'rewards': [], 'losses': [], 'eval_rewards': []},
-            'hybrid': {'rewards': [], 'losses': [], 'eval_rewards': []}
+            'mlp': {'rewards': [], 'losses': [], 'eval_rewards': [], 'eval_f1s': [], 'eval_episode_indices': []},
+            'llm': {'rewards': [], 'losses': [], 'eval_rewards': [], 'eval_f1s': [], 'eval_episode_indices': []},
+            'hybrid': {'rewards': [], 'losses': [], 'eval_rewards': [], 'eval_f1s': [], 'eval_episode_indices': []}
         }
+        # Dataset path (optional offline environment)
+        self.dataset_path: Optional[str] = None
+
+    def use_dataset(self, csv_path: str):
+        if JammingDatasetEnvironment is None:
+            raise RuntimeError("Dataset environment module not available")
+        if not os.path.isfile(csv_path):
+            raise FileNotFoundError(csv_path)
+        self.dataset_path = csv_path
+        # Update env config state_dim after probing dataset
+        env = JammingDatasetEnvironment(csv_path, scale_features=self.config.get('scale_dataset_features', True))
+        self.env_config['state_dim'] = env.state_dim
+        self.logger.log_system_event("dataset_env_config", f"Using dataset environment with state_dim={env.state_dim}")
         
     def train_single_agent(self, actor_type: str, num_episodes: int = None) -> DDPGJammingDetector:
         num_episodes = num_episodes or self.config['max_episodes']
         
-        env = JammingDetectionEnvironment(self.env_config)
+        if self.dataset_path:
+            env = JammingDatasetEnvironment(self.dataset_path, scale_features=self.config.get('scale_dataset_features', True))
+        else:
+            env = JammingDetectionEnvironment(self.env_config)
         agent = DDPGJammingDetector(
             state_dim=self.env_config['state_dim'],
             action_dim=self.env_config['action_dim'],
@@ -49,8 +69,35 @@ class DRLTrainer:
         episode_rewards = []
         best_reward = float('-inf')
         
-        for episode in range(num_episodes):
-            total_reward = agent.train_episode(env, self.config['max_steps_per_episode'])
+        # Determine effective max steps (avoid exceeding dataset length)
+        if self.dataset_path and hasattr(env, 'episode_length'):
+            effective_max_steps = min(self.config['max_steps_per_episode'], getattr(env, 'episode_length'))
+        else:
+            effective_max_steps = self.config['max_steps_per_episode']
+
+        # Adaptive evaluation frequency for small runs
+        eval_freq = self.config['evaluation_frequency']
+        if num_episodes < eval_freq:
+            eval_freq = max(1, num_episodes // 5) or 1
+
+        # Optional progress bar
+        use_pbar = self.config.get('use_progress_bar', False)
+        iterator = range(num_episodes)
+        pbar = None
+        try:
+            if use_pbar:
+                from tqdm import tqdm  # type: ignore
+                pbar = tqdm(iterator, desc=f"Training {actor_type}")
+                iterator = pbar
+        except Exception:
+            use_pbar = False
+
+        best_eval = float('-inf')
+        patience_left = self.config.get('early_stop_patience')
+        delta = self.config.get('early_stop_delta', 0.0)
+
+        for episode in iterator:
+            total_reward = agent.train_episode(env, effective_max_steps)
             episode_rewards.append(total_reward)
             
             self.training_history[actor_type]['rewards'].append(total_reward)
@@ -60,22 +107,65 @@ class DRLTrainer:
                     agent.training_metrics.get('critic_loss', 0)
                 )
             
-            if episode % self.config['evaluation_frequency'] == 0:
+            improved = False
+            if episode % eval_freq == 0:
                 eval_results = agent.evaluate(env, num_episodes=10)
-                mean_eval_reward = eval_results['mean_reward']
+                mean_eval_reward = eval_results.get('mean_reward', 0.0)
                 self.training_history[actor_type]['eval_rewards'].append(mean_eval_reward)
-                
-                self.logger.log_system_event("info", 
-                    f"Episode {episode}: Train Reward: {total_reward:.3f}, "
-                    f"Eval Reward: {mean_eval_reward:.3f} ± {eval_results['std_reward']:.3f}"
-                )
-                
+
+                # record eval episode index
+                self.training_history[actor_type]['eval_episode_indices'].append(episode)
+
+                # if evaluate returned f1/precision/recall, save f1 as well
+                f1 = eval_results.get('f1', None)
+                if f1 is not None:
+                    self.training_history[actor_type]['eval_f1s'].append(f1)
+
+                # Logging: prefer f1 when available
+                if f1 is not None:
+                    self.logger.log_system_event("info", 
+                        f"Episode {episode}: Train Reward: {total_reward:.3f}, "
+                        f"Eval F1: {f1:.4f}, Eval Reward: {mean_eval_reward:.3f} ± {eval_results.get('std_reward', 0.0):.3f}"
+                    )
+                else:
+                    self.logger.log_system_event("info", 
+                        f"Episode {episode}: Train Reward: {total_reward:.3f}, "
+                        f"Eval Reward: {mean_eval_reward:.3f} ± {eval_results.get('std_reward', 0.0):.3f}"
+                    )
+
                 if mean_eval_reward > best_reward:
                     best_reward = mean_eval_reward
+                    improved = True
                     self.save_agent(agent, f'best_{actor_type}_agent.pth')
             
             if episode % self.config['save_frequency'] == 0 and episode > 0:
                 self.save_agent(agent, f'{actor_type}_agent_episode_{episode}.pth')
+
+            # Lightweight per-episode progress log
+            self.logger.log_system_event(
+                "episode_progress",
+                f"ep={episode+1}/{num_episodes} reward={total_reward:.2f} eval_best={best_reward:.2f} buffer={len(agent.replay_buffer)} actor_loss={agent.training_metrics.get('actor_loss', 0):.4f} critic_loss={agent.training_metrics.get('critic_loss', 0):.4f}"
+            )
+            if pbar:
+                pbar.set_postfix({
+                    'R': f"{total_reward:.1f}",
+                    'BestEval': f"{best_reward:.1f}",
+                    'Buf': len(agent.replay_buffer)
+                })
+
+            # Early stopping logic
+            if patience_left and episode % eval_freq == 0:
+                if improved and (best_reward - best_eval) > delta:
+                    best_eval = best_reward
+                    patience_left = self.config.get('early_stop_patience')
+                else:
+                    patience_left -= 1
+                    if patience_left <= 0:
+                        self.logger.log_system_event("early_stop", f"Stopping early at episode {episode+1}")
+                        break
+
+        if pbar:
+            pbar.close()
         
         self.logger.log_system_event("info", f"Training completed for {actor_type.upper()} agent. Best eval reward: {best_reward:.3f}")
         return agent

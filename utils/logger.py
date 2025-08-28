@@ -58,6 +58,18 @@ class JammingDetectionLogger:
         logger.addHandler(console_handler)
         
         return logger
+
+    def set_console_level(self, level: int):
+        """Adjust console handler level for runtime verbosity control."""
+        for handler in self.system_logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                handler.setLevel(level)
+        for handler in self.detection_logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                handler.setLevel(level)
+        for handler in self.performance_logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                handler.setLevel(level)
     
     def log_detection_event(self, detection_result: Dict[str, Any]):
         timestamp = datetime.now().isoformat()
@@ -270,3 +282,15 @@ class JammingDetectionLogger:
             event_type="system_reset",
             message="Counters and metrics reset"
         )
+    
+    def warning(self, message: str):
+        """Convenience method for logging warnings"""
+        self.log_system_event("warning", message, "WARNING")
+    
+    def error(self, message: str):
+        """Convenience method for logging errors"""
+        self.log_system_event("error", message, "ERROR")
+    
+    def info(self, message: str):
+        """Convenience method for logging info"""
+        self.log_system_event("info", message, "INFO")

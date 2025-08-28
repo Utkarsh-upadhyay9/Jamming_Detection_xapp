@@ -5,6 +5,7 @@ import torch
 import os
 import sys
 import argparse
+import logging
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +32,10 @@ def main():
                        default='hybrid', help='Type of actor network')
     parser.add_argument('--episodes', type=int, default=500, help='Number of training episodes')
     parser.add_argument('--eval_episodes', type=int, default=50, help='Number of evaluation episodes')
+    parser.add_argument('--eval_freq', type=int, default=None, help='Override evaluation frequency (episodes)')
+    parser.add_argument('--save_freq', type=int, default=None, help='Override save frequency (episodes)')
+    parser.add_argument('--batch_size', type=int, default=None, help='Override batch size for training')
+    parser.add_argument('--max_steps', type=int, default=None, help='Override max steps per episode')
     parser.add_argument('--num_agents', type=int, default=2, help='Number of agents for multi-agent training')
     parser.add_argument('--save_plots', action='store_true', help='Save training plots')
     parser.add_argument('--load_model', type=str, help='Path to load pre-trained model')
@@ -38,10 +43,14 @@ def main():
                        default='realistic', help='USRP test environment type')
     parser.add_argument('--usrp_calibration', action='store_true', default=True, 
                        help='Enable USRP performance calibration')
+    parser.add_argument('--dataset_csv', type=str, help='Path to offline USRP / captured dataset CSV for dataset-driven environment')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose console logging (INFO level)')
     
     args = parser.parse_args()
     
     logger = JammingDetectionLogger()
+    if '--verbose' in sys.argv or getattr(args, 'verbose', False):
+        logger.set_console_level(logging.INFO)
     logger.log_system_event("system_start", "Starting Deep Reinforcement Learning Jamming Detection System")
     logger.log_system_event("mode_set", f"Mode: {args.mode}")
     logger.log_system_event("device_info", f"PyTorch device: {'CUDA' if torch.cuda.is_available() else 'CPU'}")
@@ -55,6 +64,12 @@ def main():
         logger.log_system_event("usrp_calibration", "⚠️  USRP Performance Calibration: DISABLED")
     
     trainer = DRLTrainer()
+    if args.dataset_csv:
+        try:
+            trainer.use_dataset(args.dataset_csv)
+            logger.log_system_event("dataset_mode", f"Using dataset environment: {args.dataset_csv}")
+        except Exception as e:
+            logger.log_system_event("dataset_error", f"Failed to init dataset env: {e}", level="ERROR")
     
     # Configure environment for USRP calibration
     if args.usrp_calibration and USRP_CALIBRATION_AVAILABLE:
@@ -69,7 +84,16 @@ def main():
     
     if args.mode == 'train':
         logger.log_system_event("training_start", f"Training {args.actor_type.upper()} agent for {args.episodes} episodes")
-        
+        # Apply overrides
+        if args.eval_freq:
+            trainer.config['evaluation_frequency'] = args.eval_freq
+        if args.save_freq:
+            trainer.config['save_frequency'] = args.save_freq
+        if args.batch_size:
+            trainer.config['batch_size'] = args.batch_size
+        if args.max_steps:
+            trainer.config['max_steps_per_episode'] = args.max_steps
+
         agent = trainer.train_single_agent(args.actor_type, args.episodes)
         
         trainer.save_agent(agent, f'final_{args.actor_type}_agent.pth')
