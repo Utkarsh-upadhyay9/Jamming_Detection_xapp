@@ -1,0 +1,35 @@
+# High-Accuracy USRP Jamming Detection Requirements
+# Advanced CatBoost ensemble implementation
+
+# Core ML Libraries
+numpy>=1.21.0
+pandas>=1.3.0
+scikit-learn>=1.2.0
+joblib>=1.1.0
+
+# Advanced Gradient Boosting
+catboost>=1.2.0
+lightgbm>=3.3.0
+
+# Data Analysis and Visualization
+matplotlib>=3.5.0
+seaborn>=0.11.0
+scipy>=1.7.0
+
+# Existing dependencies (maintain compatibility)
+matplotlib
+scikit-learn
+numpy
+pandas
+
+# Additional performance libraries
+numba>=0.56.0          # JIT compilation for speed
+optuna>=3.0.0          # Hyperparameter optimization
+shap>=0.41.0           # Model interpretability
+plotly>=5.0.0          # Interactive visualizations
+
+# Development and testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
