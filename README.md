@@ -1,4 +1,6 @@
-# 🛡 O-RAN Jamming Detection xApp with Ensemble Machine Learning
+# O-RAN Jamming Detection xApp with Ensemble Machine Learning
+
+## Overview O-RAN Jamming Detection xApp with Ensemble Machine Learning
 
 ##  Overview
 
