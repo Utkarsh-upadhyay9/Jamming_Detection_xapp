@@ -126,7 +126,8 @@ class LLMActor(nn.Module):
         
     def forward(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors='pt', padding=True, truncation=True, max_length=512)
-        
+        device = next(self.llm.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         with torch.no_grad():
             llm_outputs = self.llm(**inputs)
             pooled_output = llm_outputs.last_hidden_state.mean(dim=1)
@@ -174,9 +175,9 @@ class HybridActor(nn.Module):
         
     def forward(self, state, prompt):
         mlp_features = self.mlp_branch(state)
-        
         inputs = self.tokenizer(prompt, return_tensors='pt', padding=True, truncation=True, max_length=512)
-        
+        device = next(self.llm.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         with torch.no_grad():
             llm_outputs = self.llm(**inputs)
             pooled_output = llm_outputs.last_hidden_state.mean(dim=1)
@@ -343,6 +344,10 @@ class DDPGJammingDetector:
         for step in range(max_steps):
             action = self.select_action(state, add_noise=True)
             next_state, reward, done, info = env.step(action)
+            # Reward clipping
+            clip_val = self.config.get('reward_clip') if hasattr(self, 'config') else None
+            if clip_val:
+                reward = max(-clip_val, min(clip_val, reward))
             
             self.store_transition(state, action, reward, next_state, done)
             
@@ -437,26 +442,70 @@ class DDPGJammingDetector:
         return report
     
     def evaluate(self, env, num_episodes: int = 10) -> Dict[str, float]:
+        """Evaluate the agent on the environment.
+
+        Returns a dict that at minimum contains reward statistics. If the
+        environment provides ground-truth labels via the info dict (e.g.
+        'jamming_active' or 'label'), this method will also compute detection
+        metrics (precision/recall/f1) aggregated over the evaluation episodes
+        and include them in the returned dict as 'f1', 'precision', 'recall'
+        and raw lists 'y_true' and 'y_pred' when possible.
+        """
         total_rewards = []
-        
+        all_y_true = []
+        all_y_pred = []
+
         for _ in range(num_episodes):
             state = env.reset()
             total_reward = 0.0
             done = False
-            
+
             while not done:
                 action = self.select_action(state, add_noise=False)
-                state, reward, done, _ = env.step(action)
+                state, reward, done, info = env.step(action)
                 total_reward += reward
-            
+
+                # If environment provides labels and detection confidence, try to collect them
+                if isinstance(info, dict):
+                    # common keys: 'jamming_active' (bool/int), 'detection_confidence' (float)
+                    if 'jamming_active' in info and 'detection_confidence' in info:
+                        try:
+                            y_true = int(bool(info['jamming_active']))
+                            detection_threshold = action[0] if len(action) > 0 else 0.5
+                            y_pred = int(info.get('detection_confidence', 0.0) > detection_threshold)
+                            all_y_true.append(y_true)
+                            all_y_pred.append(y_pred)
+                        except Exception:
+                            # If any conversion fails, skip collecting labels for this step
+                            pass
+
             total_rewards.append(total_reward)
-        
-        return {
-            'mean_reward': np.mean(total_rewards),
-            'std_reward': np.std(total_rewards),
-            'min_reward': np.min(total_rewards),
-            'max_reward': np.max(total_rewards)
+
+        results = {
+            'mean_reward': float(np.mean(total_rewards)) if total_rewards else 0.0,
+            'std_reward': float(np.std(total_rewards)) if total_rewards else 0.0,
+            'min_reward': float(np.min(total_rewards)) if total_rewards else 0.0,
+            'max_reward': float(np.max(total_rewards)) if total_rewards else 0.0
         }
+
+        # If we collected any labels, compute precision/recall/F1 using utils.metrics
+        if len(all_y_true) > 0:
+            try:
+                from utils.metrics import PerformanceMetrics
+                pm = PerformanceMetrics()
+                basic = pm.calculate_basic_metrics(np.array(all_y_true), np.array(all_y_pred))
+                results.update({
+                    'precision': float(basic.get('precision', 0.0)),
+                    'recall': float(basic.get('recall', 0.0)),
+                    'f1': float(basic.get('f1_score', 0.0)),
+                    'y_true': all_y_true,
+                    'y_pred': all_y_pred
+                })
+            except Exception:
+                # If metrics computation fails, continue without metrics
+                pass
+
+        return results
     
     def save_model(self, filepath: str):
         torch.save({

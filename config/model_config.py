@@ -55,18 +55,24 @@ DRL_CONFIG: Dict[str, Any] = {
     'critic_lr': 0.001,
     'gamma': 0.99,
     'tau': 0.005,
-    'batch_size': 64,
-    'replay_buffer_size': 100000,
-    'noise_std': 0.2,
+    'batch_size': 128,
+    'replay_buffer_size': 300000,
+    'noise_std': 0.15,
     'noise_decay': 0.995,
-    'hidden_dims': [128, 128],
+    'hidden_dims': [256, 256],
     'max_episodes': 1000,
-    'max_steps_per_episode': 1000,
+    'max_steps_per_episode': 200,
     'update_frequency': 1,
     'target_update_frequency': 1,
-    'warmup_steps': 1000,
-    'evaluation_frequency': 50,
-    'save_frequency': 100,
+    'warmup_steps': 2000,
+    'evaluation_frequency': 10,
+    'save_frequency': 50,
+    # New training stabilization features
+    'reward_clip': 2.0,              # Clip per-step reward to [-reward_clip, reward_clip] (None to disable)
+    'early_stop_patience': None,      # Number of eval checks without improvement before early stop (None to disable)
+    'early_stop_delta': 1e-4,         # Minimum improvement in eval reward to reset patience
+    'use_progress_bar': True,         # Enable tqdm progress bar (enabled by default per user request)
+    'scale_dataset_features': True,   # Apply feature standardization in dataset env
     
     # USRP-specific calibration settings
     'use_usrp_calibration': True,
