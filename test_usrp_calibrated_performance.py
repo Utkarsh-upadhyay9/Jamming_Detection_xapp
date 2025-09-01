@@ -23,13 +23,13 @@ from utils.logger import JammingDetectionLogger
 def test_usrp_calibrated_performance():
     """Test DRL performance with USRP calibration enabled"""
     
-    print("🎯 USRP Calibrated DRL Performance Validation")
+    print(" USRP Calibrated DRL Performance Validation")
     print("=" * 60)
     
     logger = JammingDetectionLogger()
     
     # Display calibration targets
-    print("\n📊 Performance Calibration Targets:")
+    print("\n Performance Calibration Targets:")
     print(USRP_CALIBRATOR.get_calibration_report('realistic'))
     
     # Test different environments
@@ -58,7 +58,7 @@ def test_usrp_calibrated_performance():
         env_results = {}
         
         for actor_type in actor_types:
-            print(f"\n  🔬 Testing {actor_type.upper()} Actor...")
+            print(f"\n   Testing {actor_type.upper()} Actor...")
             
             # Create DRL agent with USRP calibration
             drl_config = DRL_CONFIG.copy()
@@ -125,18 +125,18 @@ def test_usrp_calibrated_performance():
                 'total_detections': len(detection_successes)
             }
             
-            print(f"    ✅ Detection Rate: {overall_detection_rate:.1%}")
-            print(f"    ✅ Estimated F1: {estimated_f1_score:.1%}")
-            print(f"    ✅ Avg Reward: {np.mean(episode_rewards):.3f}")
+            print(f"     Detection Rate: {overall_detection_rate:.1%}")
+            print(f"     Estimated F1: {estimated_f1_score:.1%}")
+            print(f"     Avg Reward: {np.mean(episode_rewards):.3f}")
             
             # Get USRP calibration report
             calibration_report = agent.get_usrp_calibration_report()
-            print(f"    📊 {calibration_report.split('Target Met:')[1].split('Realistic USRP Ready:')[0].strip()}")
+            print(f"     {calibration_report.split('Target Met:')[1].split('Realistic USRP Ready:')[0].strip()}")
         
         results[env_type] = env_results
     
     # Performance validation and reporting
-    print(f"\n🎯 USRP Calibration Validation Results")
+    print(f"\n USRP Calibration Validation Results")
     print("=" * 60)
     
     paper_baseline = PaperBaseline()
@@ -157,37 +157,37 @@ def test_usrp_calibrated_performance():
         improvement_target_met = f1_improvement >= target_improvement.min_improvement
         
         print(f"  Best Actor: {best_actor.upper()}")
-        print(f"  F1-Score: {best_performance['estimated_f1_score']:.1%} (Target: {targets['f1_score']:.1%}) {'✅' if f1_target_met else '❌'}")
-        print(f"  Improvement: +{f1_improvement:.1%} (Target: +{targets['improvement_over_paper']:.1%}) {'✅' if improvement_target_met else '❌'}")
+        print(f"  F1-Score: {best_performance['estimated_f1_score']:.1%} (Target: {targets['f1_score']:.1%}) {'' if f1_target_met else ''}")
+        print(f"  Improvement: +{f1_improvement:.1%} (Target: +{targets['improvement_over_paper']:.1%}) {'' if improvement_target_met else ''}")
         print(f"  Detection Rate: {best_performance['detection_rate']:.1%}")
         
         env_success = f1_target_met and improvement_target_met
         overall_success = overall_success and env_success
         
-        print(f"  Environment Success: {'✅ PASSED' if env_success else '❌ NEEDS IMPROVEMENT'}")
+        print(f"  Environment Success: {' PASSED' if env_success else ' NEEDS IMPROVEMENT'}")
     
     # Final assessment
-    print(f"\n🏆 Overall USRP Calibration Assessment:")
+    print(f"\n Overall USRP Calibration Assessment:")
     print("-" * 50)
     
     if overall_success:
-        print("✅ SUCCESS: DRL system achieves realistic 1-7% improvements over paper baseline!")
-        print("🚀 Ready for deployment with real USRP data!")
-        print("🎯 All environment targets met with proper USRP hardware modeling.")
+        print(" SUCCESS: DRL system achieves realistic 1-7% improvements over paper baseline!")
+        print(" Ready for deployment with real USRP data!")
+        print(" All environment targets met with proper USRP hardware modeling.")
         
         # Show specific improvements achieved
         realistic_best = max(results['realistic'].keys(), key=lambda k: results['realistic'][k]['estimated_f1_score'])
         realistic_f1 = results['realistic'][realistic_best]['estimated_f1_score']
         improvement_percent = (realistic_f1 - paper_baseline.f1_score) * 100
         
-        print(f"\n📊 Key Achievement:")
+        print(f"\n Key Achievement:")
         print(f"  Realistic USRP Environment: {realistic_f1:.1%} F1-Score")
         print(f"  Improvement over Paper (95.4%): +{improvement_percent:.1f}%")
-        print(f"  Within Target Range: 1-7% ✅")
+        print(f"  Within Target Range: 1-7% ")
         
     else:
-        print("⚠️  PARTIAL SUCCESS: Some targets not fully met, but showing promising results.")
-        print("💡 Consider additional training or hyperparameter tuning for optimal performance.")
+        print("⚠  PARTIAL SUCCESS: Some targets not fully met, but showing promising results.")
+        print(" Consider additional training or hyperparameter tuning for optimal performance.")
         
         # Show closest results
         for env_type, env_results in results.items():
@@ -198,18 +198,18 @@ def test_usrp_calibrated_performance():
             if improvement > 0:
                 print(f"  {env_type.title()}: +{improvement:.1f}% improvement achieved")
     
-    print(f"\n📝 Calibration Summary:")
+    print(f"\n Calibration Summary:")
     print(f"  Paper Baseline F1-Score: {paper_baseline.f1_score:.1%}")
     print(f"  Target Improvement Range: {target_improvement.min_improvement:.1%} - {target_improvement.max_improvement:.1%}")
-    print(f"  USRP Hardware Effects: ✅ Modeled")
-    print(f"  Channel Impairments: ✅ Simulated")
-    print(f"  Performance Tracking: ✅ Enabled")
+    print(f"  USRP Hardware Effects:  Modeled")
+    print(f"  Channel Impairments:  Simulated")
+    print(f"  Performance Tracking:  Enabled")
     
     return overall_success
 
 if __name__ == "__main__":
     try:
-        print(f"🚀 Starting USRP Calibrated DRL Performance Test")
+        print(f" Starting USRP Calibrated DRL Performance Test")
         print(f"⏰ Test Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         success = test_usrp_calibrated_performance()
@@ -218,16 +218,16 @@ if __name__ == "__main__":
         print(f"⏰ Test Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         if success:
-            print("🎉 MISSION ACCOMPLISHED!")
-            print("🎯 DRL system calibrated for realistic 1-7% USRP performance improvements!")
+            print(" MISSION ACCOMPLISHED!")
+            print(" DRL system calibrated for realistic 1-7% USRP performance improvements!")
             exit_code = 0
         else:
-            print("🔧 System needs additional calibration for optimal USRP performance.")
+            print(" System needs additional calibration for optimal USRP performance.")
             exit_code = 1
             
         sys.exit(exit_code)
         
     except Exception as e:
-        print(f"❌ Test failed with error: {str(e)}")
-        print("💡 Check that all dependencies are installed and calibration module is working.")
+        print(f" Test failed with error: {str(e)}")
+        print(" Check that all dependencies are installed and calibration module is working.")
         sys.exit(1)

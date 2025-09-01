@@ -257,21 +257,21 @@ class USRPPerformanceCalibrator:
         targets = self.get_performance_targets(environment)
         
         report = f"""
-🎯 DRL Performance Calibration Report - {environment.title()} Environment
+ DRL Performance Calibration Report - {environment.title()} Environment
 {'='*70}
 
-📊 Paper Baseline Performance:
+ Paper Baseline Performance:
   F1-Score: {self.paper_baseline.f1_score:.1%}
   Accuracy: {self.paper_baseline.accuracy:.1%}
   Latency: {self.paper_baseline.latency_ms:.0f}ms
 
-🚀 Target DRL Performance:
+ Target DRL Performance:
   F1-Score: {targets['f1_score']:.1%} (+{targets['improvement_over_paper']:.1%})
   Accuracy: {targets['accuracy']:.1%} (+{targets['improvement_over_paper']:.1%})
   Latency: {targets['latency_ms']:.0f}ms
   Detection Rate: {targets['detection_rate']:.1%}
 
-⚙️  Environment-Specific Calibrations:
+  Environment-Specific Calibrations:
 """
         
         if environment == 'realistic':
@@ -289,7 +289,7 @@ class USRPPerformanceCalibrator:
 """
         
         report += f"""
-✅ Expected Outcome:
+ Expected Outcome:
   The DRL system should demonstrate {targets['improvement_over_paper']:.1%} improvement
   over the research paper baseline when tested with real USRP data in
   {environment} conditions, achieving {targets['f1_score']:.1%} F1-Score.

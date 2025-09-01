@@ -21,7 +21,7 @@ try:
     USRP_CALIBRATION_AVAILABLE = True
 except ImportError:
     USRP_CALIBRATION_AVAILABLE = False
-    print("⚠️  USRP Performance Calibration module not available")
+    print("⚠  USRP Performance Calibration module not available")
 
 def main():
     parser = argparse.ArgumentParser(description='Deep Reinforcement Learning Jamming Detection System')
@@ -48,11 +48,11 @@ def main():
     
     # Display USRP calibration status
     if USRP_CALIBRATION_AVAILABLE and args.usrp_calibration:
-        logger.log_system_event("usrp_calibration", "✅ USRP Performance Calibration: ENABLED")
+        logger.log_system_event("usrp_calibration", " USRP Performance Calibration: ENABLED")
         if args.mode in ['train', 'compare', 'usrp_test']:
             print(USRP_CALIBRATOR.get_calibration_report(args.environment))
     else:
-        logger.log_system_event("usrp_calibration", "⚠️  USRP Performance Calibration: DISABLED")
+        logger.log_system_event("usrp_calibration", "⚠  USRP Performance Calibration: DISABLED")
     
     trainer = DRLTrainer()
     
@@ -191,7 +191,7 @@ def main():
         usrp_results = {}
         
         for actor_type in actor_types:
-            logger.log_system_event("info", f"\n🔬 Testing {actor_type.upper()} with USRP calibration...")
+            logger.log_system_event("info", f"\n Testing {actor_type.upper()} with USRP calibration...")
             
             # Train agent with USRP calibration
             agent = trainer.train_single_agent(actor_type, args.episodes)
@@ -219,7 +219,7 @@ def main():
             logger.log_system_event("info", f"  Model saved: {model_path}")
         
         # Performance validation against paper baseline
-        logger.log_system_event("info", "\n🎯 USRP Performance Validation")
+        logger.log_system_event("info", "\n USRP Performance Validation")
         logger.log_system_event("info", "-" * 50)
         
         if USRP_CALIBRATION_AVAILABLE:
@@ -243,10 +243,10 @@ def main():
                       estimated_f1 >= targets['f1_score'] * 0.95)
             
             if success:
-                logger.log_system_event("info", "✅ SUCCESS: USRP calibration targets achieved!")
-                logger.log_system_event("info", "🚀 Ready for real USRP deployment!")
+                logger.log_system_event("info", " SUCCESS: USRP calibration targets achieved!")
+                logger.log_system_event("info", " Ready for real USRP deployment!")
             else:
-                logger.log_system_event("info", "⚠️  PARTIAL: Continue training for optimal USRP performance")
+                logger.log_system_event("info", "⚠  PARTIAL: Continue training for optimal USRP performance")
         
         # Save USRP test results
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

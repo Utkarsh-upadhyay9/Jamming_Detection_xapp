@@ -1,10 +1,10 @@
-# 🛡️ O-RAN Jamming Detection xApp with Ensemble Machine Learning
+# 🛡 O-RAN Jamming Detection xApp with Ensemble Machine Learning
 
-## 📋 Overview
+##  Overview
 
 This project implements a comprehensive **O-RAN compliant xApp** for **real-time jamming detection** using an **ensemble machine learning approach**. The system combines Random Forest, Support Vector Machine, and Isolation Forest models to achieve high-performance detection of multiple jamming attack types in 5G networks.
 
-## 🎯 Key Features
+##  Key Features
 
 - **Ensemble ML Model**: Combines RF (44%), SVM (41%), and IF (15%) with optimized weights
 - **O-RAN Compliance**: Full E2 interface integration and near-RT RIC compatibility
@@ -13,7 +13,7 @@ This project implements a comprehensive **O-RAN compliant xApp** for **real-time
 - **Comprehensive Testing**: Complete test suite with performance validation
 - **Production Ready**: Full logging, monitoring, and deployment scripts
 
-## 🏗️ Architecture
+## 🏗 Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -45,16 +45,16 @@ This project implements a comprehensive **O-RAN compliant xApp** for **real-time
                         └───────────────────┘
 ```
 
-## 📊 Performance Targets (Research Paper Validated)
+##  Performance Targets (Research Paper Validated)
 
 | Metric | Target | Achieved | USRP Calibrated |
 |--------|--------|----------|------------------|
-| **F1-Score** | 95.4% | ✅ 95.4%+ | ✅ 98.0%+ (3.8% improvement) |
-| **Accuracy** | 95.6% | ✅ 95.6%+ | ✅ 98.0%+ (realistic USRP) |
-| **Latency** | <100ms | ✅ ~32ms | ✅ ~85ms (DRL optimized) |
-| **Detection Time** | <100ms | ✅ <50ms | ✅ <50ms (hardware ready) |
+| **F1-Score** | 95.4% |  95.4%+ |  98.0%+ (3.8% improvement) |
+| **Accuracy** | 95.6% |  95.6%+ |  98.0%+ (realistic USRP) |
+| **Latency** | <100ms |  ~32ms |  ~85ms (DRL optimized) |
+| **Detection Time** | <100ms |  <50ms |  <50ms (hardware ready) |
 
-### 🎯 DRL-USRP Calibration Performance
+###  DRL-USRP Calibration Performance
 The Deep Reinforcement Learning system is calibrated to achieve **1-7% performance improvements** over the research paper baseline when tested with real USRP data:
 
 - **Ideal Environment**: +0.7% improvement (98.5% F1-Score)
@@ -63,7 +63,7 @@ The Deep Reinforcement Learning system is calibrated to achieve **1-7% performan
 
 This calibration accounts for real-world USRP hardware impairments including phase noise, I/Q imbalance, frequency offsets, and channel effects.
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Clone and Setup
 
@@ -132,7 +132,7 @@ python -m pytest tests/test_ensemble.py -v
 python -m pytest tests/test_performance.py -v
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Jamming_detection_xApp/
@@ -167,7 +167,7 @@ Jamming_detection_xApp/
 └── saved_models/               # Trained model storage
 ```
 
-## 🔧 Configuration
+##  Configuration
 
 ### Model Configuration (`config/model_config.py`)
 - Ensemble weights: RF (44%), SVM (41%), IF (15%)
@@ -179,7 +179,7 @@ Jamming_detection_xApp/
 - RIC communication settings
 - Attack scenario definitions
 
-## 📈 Model Details
+##  Model Details
 
 ### Ensemble Architecture
 The system uses a weighted voting ensemble with three complementary models:
@@ -228,7 +228,7 @@ The system extracts 15 key features from MAC layer metrics:
 | **Sweep Jamming** | Frequency pattern recognition | Frequency-hopping interference |
 | **Intelligent Jamming** | Traffic pattern analysis | Adaptive, traffic-aware attacks |
 
-## 🔍 Monitoring and Logging
+##  Monitoring and Logging
 
 ### Real-time Metrics
 - Detection latency per sample
@@ -242,7 +242,7 @@ The system extracts 15 key features from MAC layer metrics:
 - **ERROR**: System errors and failures
 - **DEBUG**: Detailed diagnostic information
 
-## 📊 Performance Validation
+##  Performance Validation
 
 The system includes comprehensive performance testing:
 
@@ -257,7 +257,7 @@ python tests/test_performance.py
 python tests/test_ensemble.py
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Custom Model Training
 ```python
@@ -338,7 +338,7 @@ Key innovations:
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

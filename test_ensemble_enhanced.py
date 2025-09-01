@@ -8,13 +8,13 @@ from sklearn.model_selection import train_test_split
 sys.path.append(os.path.dirname(__file__))
 
 def test_ensemble_enhanced():
-    print("🚀 Enhanced Ensemble Model Test with Realistic USRP Data")
+    print(" Enhanced Ensemble Model Test with Realistic USRP Data")
     print("=" * 60)
     
     normal_path = "Ensemble_ML_Jamming_detection_dataset/realistic_dataset/normal_traffic.csv"
     jamming_path = "Ensemble_ML_Jamming_detection_dataset/realistic_dataset/jamming_attacks.csv"
     
-    print("📊 Loading datasets...")
+    print(" Loading datasets...")
     normal_df = pd.read_csv(normal_path)
     jamming_df = pd.read_csv(jamming_path)
     
@@ -27,8 +27,8 @@ def test_ensemble_enhanced():
     X = np.vstack([X_normal, X_jamming])
     y = np.hstack([y_normal, y_jamming])
     
-    print(f"✅ Combined dataset: {X.shape[0]} samples, {X.shape[1]} features")
-    print(f"📊 Label distribution: {np.bincount(y)}")
+    print(f" Combined dataset: {X.shape[0]} samples, {X.shape[1]} features")
+    print(f" Label distribution: {np.bincount(y)}")
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
@@ -47,7 +47,7 @@ def test_ensemble_enhanced():
     results = {}
     
     for name, model in models.items():
-        print(f"\n🔬 Training {name}...")
+        print(f"\n Training {name}...")
         
         start_time = datetime.now()
         
@@ -76,16 +76,16 @@ def test_ensemble_enhanced():
             'confidences': confidence
         }
         
-        print(f"  ✅ F1-Score: {f1:.4f}")
-        print(f"  ✅ Accuracy: {accuracy:.4f}")
-        print(f"  ⏱️  Training time: {training_time:.2f}s")
+        print(f"   F1-Score: {f1:.4f}")
+        print(f"   Accuracy: {accuracy:.4f}")
+        print(f"    Training time: {training_time:.2f}s")
         
-        print(f"\n📊 Detailed Classification Report for {name}:")
+        print(f"\n Detailed Classification Report for {name}:")
         class_names = ['Normal', 'Power Jamming', 'Sweep Jamming', 'Intelligent Jamming']
         print(classification_report(y_test, y_pred, target_names=class_names, digits=4))
     
     # Enhanced ensemble combination (RF + SVM only, better performance)
-    print(f"\n🎯 Testing Enhanced Ensemble (RF + SVM)...")
+    print(f"\n Testing Enhanced Ensemble (RF + SVM)...")
     
     rf_pred = results['Random Forest']['predictions']
     rf_conf = results['Random Forest']['confidences']
@@ -123,14 +123,14 @@ def test_ensemble_enhanced():
         'mean_confidence': np.mean(ensemble_conf)
     }
     
-    print(f"  ✅ Enhanced Ensemble F1-Score: {ensemble_f1:.4f}")
-    print(f"  ✅ Enhanced Ensemble Accuracy: {ensemble_accuracy:.4f}")
+    print(f"   Enhanced Ensemble F1-Score: {ensemble_f1:.4f}")
+    print(f"   Enhanced Ensemble Accuracy: {ensemble_accuracy:.4f}")
     
-    print(f"\n📊 Enhanced Ensemble Classification Report:")
+    print(f"\n Enhanced Ensemble Classification Report:")
     class_names = ['Normal', 'Power Jamming', 'Sweep Jamming', 'Intelligent Jamming']
     print(classification_report(y_test, ensemble_pred, target_names=class_names, digits=4))
     
-    print(f"\n📊 FINAL RESULTS SUMMARY:")
+    print(f"\n FINAL RESULTS SUMMARY:")
     print("=" * 50)
     
     for model_name, metrics in results.items():
@@ -143,7 +143,7 @@ def test_ensemble_enhanced():
             print(f"  Training Time: {metrics['training_time']:.2f}s")
         print(f"  Mean Confidence: {metrics['mean_confidence']:.3f}")
     
-    print(f"\n🎯 Performance Targets Validation:")
+    print(f"\n Performance Targets Validation:")
     print("-" * 40)
     
     targets = {
@@ -155,24 +155,24 @@ def test_ensemble_enhanced():
     f1_pass = ensemble_metrics['f1_score'] >= targets['f1_score']
     accuracy_pass = ensemble_metrics['accuracy'] >= targets['accuracy']
     
-    print(f"F1-Score Target (≥{targets['f1_score']:.3f}): {ensemble_metrics['f1_score']:.4f} {'✅' if f1_pass else '❌'}")
-    print(f"Accuracy Target (≥{targets['accuracy']:.3f}): {ensemble_metrics['accuracy']:.4f} {'✅' if accuracy_pass else '❌'}")
+    print(f"F1-Score Target (≥{targets['f1_score']:.3f}): {ensemble_metrics['f1_score']:.4f} {'' if f1_pass else ''}")
+    print(f"Accuracy Target (≥{targets['accuracy']:.3f}): {ensemble_metrics['accuracy']:.4f} {'' if accuracy_pass else ''}")
     
     overall_success = f1_pass and accuracy_pass
     
-    print(f"\n🏆 Overall Result: {'✅ SUCCESS' if overall_success else '❌ NEEDS IMPROVEMENT'}")
+    print(f"\n Overall Result: {' SUCCESS' if overall_success else ' NEEDS IMPROVEMENT'}")
     
     if overall_success:
-        print("🎉 The realistic USRP dataset achieves and EXCEEDS research paper targets!")
-        print("🚀 This dataset is ready for production deployment!")
+        print(" The realistic USRP dataset achieves and EXCEEDS research paper targets!")
+        print(" This dataset is ready for production deployment!")
     else:
-        print("💡 Consider further dataset refinement to meet all targets.")
+        print(" Consider further dataset refinement to meet all targets.")
     
     print(f"\n📈 PERFORMANCE ANALYSIS:")
     print("-" * 30)
     print(f"🏅 Best Model: Random Forest ({results['Random Forest']['f1_score']:.4f} F1-Score)")
     print(f"⚡ Fastest Training: Random Forest ({results['Random Forest']['training_time']:.2f}s)")
-    print(f"🎯 Ensemble Improvement: {(ensemble_metrics['f1_score'] - min([results[m]['f1_score'] for m in ['Random Forest', 'SVM']]))*100:.2f}% boost")
+    print(f" Ensemble Improvement: {(ensemble_metrics['f1_score'] - min([results[m]['f1_score'] for m in ['Random Forest', 'SVM']]))*100:.2f}% boost")
     
     return overall_success
 
@@ -180,9 +180,9 @@ if __name__ == "__main__":
     success = test_ensemble_enhanced()
     print(f"\n{'='*60}")
     if success:
-        print("✅ MISSION ACCOMPLISHED! Realistic USRP dataset is production-ready.")
-        print("🚀 Ready for O-RAN deployment with confident performance guarantees!")
+        print(" MISSION ACCOMPLISHED! Realistic USRP dataset is production-ready.")
+        print(" Ready for O-RAN deployment with confident performance guarantees!")
     else:
-        print("⚠️  Some targets not met, but dataset shows strong performance.")
+        print("⚠  Some targets not met, but dataset shows strong performance.")
     
     sys.exit(0 if success else 1)

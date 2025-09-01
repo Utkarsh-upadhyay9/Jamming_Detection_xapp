@@ -203,9 +203,9 @@ def run_comprehensive_demo():
     logger.info(f"\nOverall: {total_passed}/{total_tests} tests passed")
     
     if total_passed == total_tests:
-        logger.info("🎉 All tests passed! DRL Jamming Detection System is ready!")
+        logger.info(" All tests passed! DRL Jamming Detection System is ready!")
     else:
-        logger.info("⚠️  Some tests failed. Check the logs above for details.")
+        logger.info("⚠  Some tests failed. Check the logs above for details.")
     
     logger.info("\nNext steps:")
     logger.info("- Run: python drl_jamming_detection.py --mode train --actor_type hybrid")

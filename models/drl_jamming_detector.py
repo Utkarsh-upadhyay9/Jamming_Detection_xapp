@@ -378,7 +378,7 @@ class DDPGJammingDetector:
             validation_results = env.validate_calibrated_performance()
             
             if validation_results.get('overall_success', False):
-                self.logger.info(f"Episode {len(self.episode_rewards)}: USRP performance targets met! 🎯")
+                self.logger.info(f"Episode {len(self.episode_rewards)}: USRP performance targets met! ")
             elif not validation_results.get('insufficient_data', False):
                 targets = USRP_CALIBRATOR.get_performance_targets(self.environment_type)
                 current_f1 = validation_results.get('f1_score_target_met', False)
@@ -386,8 +386,8 @@ class DDPGJammingDetector:
                 
                 self.logger.warning(
                     f"Episode {len(self.episode_rewards)}: USRP calibration targets not fully met. "
-                    f"F1-target: {'✅' if current_f1 else '❌'}, "
-                    f"Improvement: {'✅' if improvement else '❌'}, "
+                    f"F1-target: {'' if current_f1 else ''}, "
+                    f"Improvement: {'' if improvement else ''}, "
                     f"Target F1: {targets['f1_score']:.1%}"
                 )
     
@@ -408,26 +408,26 @@ class DDPGJammingDetector:
         improvement_over_paper = (estimated_f1 - 0.954) if estimated_f1 > 0.954 else 0.0
         
         report = f"""
-🎯 DRL-USRP Calibration Performance Report
+ DRL-USRP Calibration Performance Report
 {'='*50}
 
-📊 Current Performance:
+ Current Performance:
   Estimated F1-Score: {estimated_f1:.1%}
   Detection Rate: {recent_performance:.1%}
   Episodes Trained: {len(self.episode_rewards)}
   Performance Samples: {len(self.performance_history)}
 
-🚀 Target Performance ({self.environment_type.title()}):
+ Target Performance ({self.environment_type.title()}):
   Target F1-Score: {targets['f1_score']:.1%}
   Target Improvement: {targets['improvement_over_paper']:.1%}
   Paper Baseline: 95.4%
 
 📈 Progress Assessment:
   Improvement over Paper: {improvement_over_paper:.1%}
-  Target Met: {'✅ YES' if estimated_f1 >= targets['f1_score'] * 0.98 else '❌ NOT YET'}
-  Realistic USRP Ready: {'✅ YES' if improvement_over_paper >= 0.01 else '❌ NEEDS MORE TRAINING'}
+  Target Met: {' YES' if estimated_f1 >= targets['f1_score'] * 0.98 else ' NOT YET'}
+  Realistic USRP Ready: {' YES' if improvement_over_paper >= 0.01 else ' NEEDS MORE TRAINING'}
 
-💡 Calibration Status:
+ Calibration Status:
   Environment: {self.environment_type}
   USRP Effects: Active
   Channel Impairments: Simulated
