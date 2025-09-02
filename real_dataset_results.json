@@ -1,0 +1,109 @@
+{
+  "dataset_info": {
+    "total_samples": 25000,
+    "features": 27,
+    "train_samples": 17500,
+    "test_samples": 7500,
+    "class_distribution": {
+      "normal": 15000,
+      "reactive_jamming": 4500,
+      "sweep_jamming": 3000,
+      "power_jamming": 2500
+    },
+    "test_distribution": {
+      "normal": 4500,
+      "reactive_jamming": 1350,
+      "sweep_jamming": 900,
+      "power_jamming": 750
+    }
+  },
+  "training_info": {
+    "training_time_seconds": 10.241347312927246,
+    "training_results": {
+      "ensemble_accuracy": 0.7814285714285715,
+      "ensemble_f1": 0.7770697382443221,
+      "individual_scores": {
+        "catboost": {
+          "accuracy": 0.7814285714285715,
+          "f1_score": 0.7770697382443221
+        },
+        "lightgbm": {
+          "accuracy": 0.7722857142857142,
+          "f1_score": 0.7721957645698738
+        },
+        "extratrees": {
+          "accuracy": 0.7897142857142857,
+          "f1_score": 0.7877785900750862
+        }
+      }
+    }
+  },
+  "performance_metrics": {
+    "overall_accuracy": 0.7869333333333334,
+    "binary_accuracy": 0.9994666666666666,
+    "avg_prediction_time_ms": 0.08013591766357421,
+    "processing_rate_per_second": 12478.798885141488
+  },
+  "per_type_results": {
+    "normal": {
+      "accuracy": 1.0,
+      "correct": 4500,
+      "total": 4500,
+      "percentage": 100.0
+    },
+    "power_jamming": {
+      "accuracy": 0.31733333333333336,
+      "correct": 238,
+      "total": 750,
+      "percentage": 31.733333333333334
+    },
+    "reactive_jamming": {
+      "accuracy": 0.6207407407407407,
+      "correct": 838,
+      "total": 1350,
+      "percentage": 62.07407407407407
+    },
+    "sweep_jamming": {
+      "accuracy": 0.3622222222222222,
+      "correct": 326,
+      "total": 900,
+      "percentage": 36.22222222222222
+    }
+  },
+  "confusion_matrix": [
+    [
+      4500,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      238,
+      426,
+      86
+    ],
+    [
+      4,
+      228,
+      838,
+      280
+    ],
+    [
+      0,
+      109,
+      465,
+      326
+    ]
+  ],
+  "class_labels": [
+    "normal",
+    "power_jamming",
+    "reactive_jamming",
+    "sweep_jamming"
+  ],
+  "targets_met": [
+    "normal"
+  ],
+  "test_timestamp": "2025-09-02 12:19:47"
+}

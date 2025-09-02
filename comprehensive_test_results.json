@@ -1,0 +1,66 @@
+{
+  "overall_accuracy": 0.5796,
+  "binary_accuracy": 0.7850666666666667,
+  "avg_detection_time_ms": 364.4094039281209,
+  "total_samples": 7500,
+  "processing_rate_per_second": 2.7441517705332075,
+  "per_type_results": {
+    "normal": {
+      "accuracy": 0.6944444444444444,
+      "correct": 3125,
+      "total": 4500,
+      "percentage": 69.44444444444444
+    },
+    "power_jamming": {
+      "accuracy": 0.0,
+      "correct": 0,
+      "total": 750,
+      "percentage": 0.0
+    },
+    "reactive_jamming": {
+      "accuracy": 0.8666666666666667,
+      "correct": 1170,
+      "total": 1350,
+      "percentage": 86.66666666666667
+    },
+    "sweep_jamming": {
+      "accuracy": 0.057777777777777775,
+      "correct": 52,
+      "total": 900,
+      "percentage": 5.777777777777778
+    }
+  },
+  "confusion_matrix": [
+    [
+      3125,
+      0,
+      1302,
+      73
+    ],
+    [
+      54,
+      0,
+      655,
+      41
+    ],
+    [
+      102,
+      0,
+      1170,
+      78
+    ],
+    [
+      81,
+      0,
+      767,
+      52
+    ]
+  ],
+  "class_labels": [
+    "normal",
+    "power_jamming",
+    "reactive_jamming",
+    "sweep_jamming"
+  ],
+  "test_timestamp": "2025-09-01 21:00:28"
+}
