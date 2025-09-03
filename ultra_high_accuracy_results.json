@@ -1,0 +1,39 @@
+{
+  "training_time": 55.57238245010376,
+  "test_time": 0.4503138065338135,
+  "overall_accuracy": 0.9990666666666667,
+  "per_type_results": {
+    "normal": {
+      "accuracy": 1.0,
+      "correct": 3750,
+      "total": 3750,
+      "percentage": 100.0
+    },
+    "power_jamming": {
+      "accuracy": 1.0,
+      "correct": 1875,
+      "total": 1875,
+      "percentage": 100.0
+    },
+    "reactive_jamming": {
+      "accuracy": 0.996,
+      "correct": 747,
+      "total": 750,
+      "percentage": 99.6
+    },
+    "sweep_jamming": {
+      "accuracy": 0.9964444444444445,
+      "correct": 1121,
+      "total": 1125,
+      "percentage": 99.64444444444445
+    }
+  },
+  "targets_met": [
+    "normal",
+    "power_jamming",
+    "reactive_jamming",
+    "sweep_jamming"
+  ],
+  "all_targets_achieved": true,
+  "test_timestamp": "2025-09-02 13:01:14"
+}
