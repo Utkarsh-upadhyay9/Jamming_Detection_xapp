@@ -20,6 +20,10 @@ ax.set_title('F1-score Surface vs Ensemble Weights')
 ax.scatter([0.75],[0.25],[0.988], color='r', s=40)
 plt.tight_layout()
 plt.savefig('figs/weight_surface_3d.png', dpi=300)
+# Also save a version without the heading
+ax.set_title('')
+plt.tight_layout()
+plt.savefig('figs/weight_surface_3d_notitle.png', dpi=300)
 plt.close()
 
 # 2. Noise robustness plot
