@@ -18,6 +18,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import joblib
 import time
+
+# Set MATLAB-style plotting parameters
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Times New Roman', 'Times', 'DejaVu Serif']
+plt.rcParams['axes.linewidth'] = 1.2
+plt.rcParams['axes.edgecolor'] = 'black'
+plt.rcParams['axes.axisbelow'] = True
+plt.rcParams['grid.alpha'] = 0.3
+plt.rcParams['grid.linewidth'] = 0.8
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams['xtick.top'] = True
+plt.rcParams['ytick.right'] = True
 from typing import Dict, List, Tuple
 import warnings
 warnings.filterwarnings('ignore')
@@ -62,35 +75,53 @@ def create_f1_convergence_plot():
     
     episodes, f1_data = generate_f1_convergence_data()
     
-    plt.figure(figsize=(14, 8))
+    plt.figure(figsize=(14, 8), facecolor='white')
+    ax = plt.gca()
+    ax.set_facecolor('white')
     
-    # Colors for each line
-    colors = {
-        'Normal': '#2E8B57',           # Sea Green
-        'Power Jamming': '#DC143C',    # Crimson
-        'Sweep Jamming': '#FF8C00',    # Dark Orange  
-        'Reactive Jamming': '#4169E1', # Royal Blue
-        'Ensemble': '#8B008B'          # Dark Magenta
-    }
+    # MATLAB-style colors and markers
+    matlab_colors = ['b', 'r', 'g', 'm', 'c']
+    matlab_markers = ['o', 's', '^', 'd', 'v']
     
-    # Plot convergence lines with solid lines only
-    for label, f1_scores in f1_data.items():
+    # Plot convergence lines with MATLAB-style formatting
+    for i, (label, f1_scores) in enumerate(f1_data.items()):
         if label == 'Ensemble':
-            plt.plot(episodes, f1_scores, label=label, color=colors[label], 
-                    linewidth=3, alpha=0.9, linestyle='-')
+            plt.plot(episodes, f1_scores, color=matlab_colors[i], marker=matlab_markers[i],
+                    linewidth=2, markersize=4, markevery=25, label=label)
         else:
-            plt.plot(episodes, f1_scores, label=label, color=colors[label], 
-                    linewidth=2.5, alpha=0.8, linestyle='-')
+            plt.plot(episodes, f1_scores, color=matlab_colors[i], marker=matlab_markers[i],
+                    linewidth=2, markersize=4, markevery=25, label=label)
     
-    # Customize plot (no title, clean axes)
-    plt.xlabel('Training Episodes', fontsize=14, fontweight='bold')
-    plt.ylabel('F1 Score', fontsize=14, fontweight='bold')
+    # MATLAB-style formatting
+    plt.xlabel('Training Episodes', fontsize=28, fontweight='bold')
+    plt.ylabel('F1 Score', fontsize=28, fontweight='bold')
     
-    plt.grid(True, alpha=0.3, linestyle=':')
-    plt.legend(fontsize=12, loc='lower right', framealpha=0.9)
+    # MATLAB-style grid
+    plt.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
+    plt.legend(fontsize=24, loc='lower right', frameon=True, fancybox=False, shadow=False)
+    
+    # Set complete box around plot with thick borders
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(2.0)
+        spine.set_color('black')
     
     plt.xlim(0, 300)
     plt.ylim(0.7, 1.02)
+    
+    # Set complete box around plot with thick borders
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(2.0)
+        spine.set_color('black')
+    
+    # Add outer box around entire figure
+    plt.gca().patch.set_linewidth(2.0)
+    plt.gca().patch.set_edgecolor('black')
+    
+    # Increase tick label sizes
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     
     plt.tight_layout()
     plt.savefig('f1_convergence_plot.png', dpi=300, bbox_inches='tight')
@@ -98,12 +129,12 @@ def create_f1_convergence_plot():
     plt.show()
 
 def create_single_confusion_matrix():
-    """Create a single comprehensive confusion matrix"""
+    """Create a single comprehensive confusion matrix in MATLAB style"""
     
     # Generate realistic confusion matrix data with percentages
     # Based on our target accuracies: Normal 99.8%, Power 99.9%, Sweep 98.6%, Reactive 96.3%
     
-    classes = ['Normal', 'Power Jamming', 'Sweep Jamming', 'Reactive Jamming']
+    classes = ['Normal', 'Power', 'Sweep', 'Reactive']
     
     # Realistic confusion matrix as percentages
     cm_percentages = np.array([
@@ -116,13 +147,34 @@ def create_single_confusion_matrix():
     plt.figure(figsize=(10, 8))
     
     # Create heatmap with percentages
-    sns.heatmap(cm_percentages, annot=True, fmt='.1f', cmap='Blues', 
+    heatmap = sns.heatmap(cm_percentages, annot=True, fmt='.1f', cmap='Blues', 
                 xticklabels=classes, yticklabels=classes,
                 cbar_kws={'label': 'Percentage (%)'},
-                annot_kws={'fontsize': 14, 'fontweight': 'bold'})
+                annot_kws={'fontsize': 28, 'fontweight': 'bold'},
+                linewidths=1, linecolor='black')
     
-    plt.xlabel('Predicted Label', fontsize=14, fontweight='bold')
-    plt.ylabel('True Label', fontsize=14, fontweight='bold')
+    # MATLAB-style colorbar formatting
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=20)
+    cbar.set_label('Percentage (%)', fontsize=24)
+    cbar.outline.set_linewidth(1.2)
+    
+    plt.xlabel('Predicted Label', fontsize=28, fontweight='bold')
+    plt.ylabel('True Label', fontsize=28, fontweight='bold')
+    
+    # MATLAB-style tick formatting
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20, rotation=0)
+    
+    # Set complete box around plot with thick borders
+    for spine in plt.gca().spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(2.0)
+        spine.set_color('black')
+    
+    # Add outer box around entire figure
+    plt.gca().patch.set_linewidth(2.0)
+    plt.gca().patch.set_edgecolor('black')
     
     plt.tight_layout()
     plt.savefig('comprehensive_confusion_matrix.png', dpi=300, bbox_inches='tight')
@@ -162,22 +214,24 @@ def analyze_weight_combinations():
     return weight_combinations, f1_scores, latencies
 
 def create_weight_analysis_plot():
-    """Create F1 Score Bar Chart for Different Weight Combinations"""
+    """Create F1 Score Bar Chart for Different Weight Combinations in MATLAB Style"""
     
     weight_combinations, f1_scores, latencies = analyze_weight_combinations()
     
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(12, 8), facecolor='white')
+    ax = plt.gca()
+    ax.set_facecolor('white')
     
-    # Create labels for x-axis
-    labels = [f"CatBoost: {cb}%\nIsolation Forest: {if_}%" for cb, if_ in weight_combinations]
+    # Create labels with weight combinations
+    labels = ["Pure CatBoost(100,0)", "Optimized(75,25)", "Balanced(50,50)", "IF Dominant(25,75)", "Pure IF(0,100)"]
     
-    # Create bar chart
-    colors = ['#FF6B6B', '#2E8B57', '#4ECDC4', '#FFA726', '#9C27B0']
-    bars = plt.bar(labels, np.array(f1_scores) * 100, color=colors, alpha=0.8, edgecolor='black')
+    # MATLAB-style colors for bars
+    matlab_colors = ['b', 'r', 'g', 'm', 'c']
+    bars = plt.bar(labels, np.array(f1_scores) * 100, color=matlab_colors, alpha=0.7, 
+                   edgecolor='black', linewidth=1.2)
     
-    # Highlight our chosen configuration (75% CatBoost, 25% Isolation Forest) with clean styling
-    bars[1].set_color('#2E8B57')
-    bars[1].set_alpha(1.0)
+    # Highlight our chosen configuration with different style
+    bars[1].set_alpha(0.9)
     bars[1].set_linewidth(2)
     bars[1].set_edgecolor('black')
     
@@ -186,48 +240,79 @@ def create_weight_analysis_plot():
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2., height + 0.5,
                 f'{score*100:.1f}%', ha='center', va='bottom', 
-                fontsize=11, fontweight='bold')
+                fontsize=22, fontweight='bold')
     
-    # Customize plot (no title)
-    plt.xlabel('Model Weight Configuration', fontsize=14, fontweight='bold')
-    plt.ylabel('F1 Score (%)', fontsize=14, fontweight='bold')
+    # MATLAB-style formatting
+    plt.ylabel('F1 Score (%)', fontsize=28, fontweight='bold')
     
-    plt.grid(True, alpha=0.3, axis='y', linestyle=':')
+    # MATLAB-style grid
+    plt.grid(True, alpha=0.4, axis='y', linestyle='-', linewidth=0.8)
     plt.ylim(70, 100)
     
-    plt.xticks(rotation=0, ha='center')
+    # Set complete box around plot with thick borders
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(2.0)
+        spine.set_color('black')
+    
+    # Add outer box around entire figure
+    plt.gca().patch.set_linewidth(2.0)
+    plt.gca().patch.set_edgecolor('black')
+    
+    plt.xticks(rotation=45, ha='right', fontsize=20)
+    plt.yticks(fontsize=20)
     plt.tight_layout()
     plt.savefig('weight_analysis_plot.png', dpi=300, bbox_inches='tight')
     print("⚖️  Weight analysis plot saved: weight_analysis_plot.png")
     plt.show()
 
 def create_comparative_performance_plot():
-    """Create Latency vs F1 Score Tradeoff Plot Only"""
+    """Create Latency vs F1 Score Tradeoff Plot in MATLAB Style"""
     
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(11, 7), facecolor='white')
+    ax = plt.gca()
+    ax.set_facecolor('white')
     
     # Use the same 5 weight combinations from weight analysis
     weight_combinations, f1_scores_weights, latencies_weights = analyze_weight_combinations()
     
-    # Create scatter plot for weight configurations
-    weight_colors = ['#FF6B6B', '#2E8B57', '#4ECDC4', '#FFA726', '#9C27B0']
+    # MATLAB-style colors and markers
+    matlab_colors = ['b', 'r', 'g', 'm', 'c']
     weight_labels = [f"({cb},{if_})" for cb, if_ in weight_combinations]
     
-    scatter = plt.scatter(latencies_weights, np.array(f1_scores_weights) * 100, 
-                         s=[250]*len(weight_combinations), c=weight_colors, 
-                         alpha=0.8, edgecolors='black', linewidth=2)
+    # Create scatter plot with MATLAB-style formatting
+    for i, (lat, f1, label, color) in enumerate(zip(latencies_weights, f1_scores_weights, weight_labels, matlab_colors)):
+        plt.scatter(lat, f1 * 100, s=200, c=color, alpha=0.8, 
+                   edgecolors='black', linewidth=1.2, marker='o')
     
-    # Add weight configuration labels
-    for i, (lat, f1, label) in enumerate(zip(latencies_weights, f1_scores_weights, weight_labels)):
-        plt.annotate(label, (lat, f1 * 100), xytext=(5, 5), 
-                    textcoords='offset points', fontweight='bold', fontsize=12)
+    # Add weight configuration labels with custom positioning - (100,0) below, others next to dots
+    label_offsets = [(8, -20), (8, 8), (8, 8), (8, 8), (8, 8)]  # (100,0) below, others next to dots
+    for i, (lat, f1, label, offset) in enumerate(zip(latencies_weights, f1_scores_weights, weight_labels, label_offsets)):
+        plt.annotate(label, (lat, f1 * 100), xytext=offset, 
+                    textcoords='offset points', fontweight='bold', fontsize=24,
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.9, edgecolor='black'))
     
-    plt.xlabel('Latency (ms)', fontsize=14, fontweight='bold')
-    plt.ylabel('F1 Score (%)', fontsize=14, fontweight='bold') 
+    plt.xlabel('Latency (ms)', fontsize=28, fontweight='bold')
+    plt.ylabel('F1 Score (%)', fontsize=28, fontweight='bold') 
     
-    plt.grid(True, alpha=0.3)
-    plt.xlim(10, 30)
-    plt.ylim(70, 100)
+    # MATLAB-style grid
+    plt.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
+    plt.xlim(9, 32)
+    plt.ylim(72, 100)
+    
+    # Set complete box around plot with thick borders
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(2.0)
+        spine.set_color('black')
+    
+    # Add outer box around entire figure
+    plt.gca().patch.set_linewidth(2.0)
+    plt.gca().patch.set_edgecolor('black')
+    
+    # Increase tick label sizes
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
     
     plt.tight_layout()
     plt.savefig('comparative_performance_plot.png', dpi=300, bbox_inches='tight')
