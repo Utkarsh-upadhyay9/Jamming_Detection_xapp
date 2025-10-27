@@ -1,0 +1,74 @@
+{
+  "generation_date": "2025-09-01T14:15:04.652525",
+  "total_samples": 25000,
+  "features": 27,
+  "feature_names": [
+    "rsrp_dbm",
+    "rsrq_db",
+    "sinr_db",
+    "rssi_dbm",
+    "channel_state_info",
+    "doppler_spread_hz",
+    "delay_spread_ns",
+    "coherence_bandwidth_hz",
+    "interference_power_dbm",
+    "adjacent_channel_power",
+    "spurious_emissions",
+    "intermodulation_distortion",
+    "power_spectral_density",
+    "autocorrelation_peak",
+    "cross_correlation",
+    "signal_entropy",
+    "iq_imbalance_magnitude",
+    "dc_offset_i",
+    "dc_offset_q",
+    "phase_noise_integrated",
+    "spectral_centroid",
+    "spectral_rolloff",
+    "spectral_flux",
+    "zero_crossing_rate",
+    "signal_complexity",
+    "hurst_exponent",
+    "fractal_dimension"
+  ],
+  "scenarios": {
+    "normal": {
+      "samples": 15000,
+      "proportion": 0.6
+    },
+    "power_jamming": {
+      "samples": 2500,
+      "proportion": 0.1
+    },
+    "sweep_jamming": {
+      "samples": 3000,
+      "proportion": 0.12
+    },
+    "reactive_jamming": {
+      "samples": 4500,
+      "proportion": 0.18
+    }
+  },
+  "usrp_specifications": {
+    "frequency_range": [
+      70000000.0,
+      6000000000.0
+    ],
+    "sample_rate_range": [
+      200000.0,
+      61440000.0
+    ],
+    "dynamic_range": 100,
+    "phase_noise": -85,
+    "iq_imbalance_max": 0.5,
+    "lo_leakage": -50,
+    "image_rejection": 80,
+    "spurious_free": 70
+  },
+  "standards_compliance": [
+    "IEEE 802.11 specifications",
+    "3GPP 5G NR standards",
+    "O-RAN Alliance specifications",
+    "USRP hardware calibrated parameters"
+  ]
+}
